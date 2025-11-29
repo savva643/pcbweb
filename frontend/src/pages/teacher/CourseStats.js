@@ -42,6 +42,7 @@ const CourseStats = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [filteredStudents, setFilteredStudents] = useState(null);
 
   useEffect(() => {
     fetchStats();
@@ -62,6 +63,7 @@ const CourseStats = () => {
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
+      setFilteredStudents(null);
       return;
     }
 
@@ -71,8 +73,18 @@ const CourseStats = () => {
         params: { search: searchQuery }
       });
       setSearchResults(response.data);
+      
+      // Фильтруем студентов из stats по результатам поиска
+      if (stats?.students && response.data.length > 0) {
+        const foundStudentIds = response.data.map(s => s.id);
+        const filtered = stats.students.filter(s => foundStudentIds.includes(s.studentId));
+        setFilteredStudents(filtered);
+      } else {
+        setFilteredStudents([]);
+      }
     } catch (error) {
       setError('Не удалось выполнить поиск');
+      setFilteredStudents(null);
     } finally {
       setSearching(false);
     }
@@ -186,7 +198,13 @@ const CourseStats = () => {
               fullWidth
               placeholder="Поиск по имени или email..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (!e.target.value.trim()) {
+                  setSearchResults([]);
+                  setFilteredStudents(null);
+                }
+              }}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   handleSearch();
@@ -215,11 +233,11 @@ const CourseStats = () => {
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Студенты курса ({searchQuery && searchResults.length > 0 ? searchResults.length : (stats?.students?.length || 0)})
+            Студенты курса ({searchQuery && filteredStudents !== null ? filteredStudents.length : (stats?.students?.length || 0)})
           </Typography>
           {!stats?.students || stats.students.length === 0 ? (
             <Alert severity="info">На курс еще никто не записался</Alert>
-          ) : searchQuery && searchResults.length === 0 ? (
+          ) : searchQuery && filteredStudents !== null && filteredStudents.length === 0 ? (
             <Alert severity="info">Студенты не найдены</Alert>
           ) : (
             <TableContainer>
@@ -235,10 +253,7 @@ const CourseStats = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(searchQuery && searchResults.length > 0 ? 
-                    stats?.students?.filter(s => searchResults.some(sr => sr.id === s.studentId)) :
-                    stats?.students
-                  )?.map((student) => (
+                  {(searchQuery && filteredStudents !== null ? filteredStudents : stats?.students)?.map((student) => (
                     <TableRow key={student.studentId} hover>
                       <TableCell>
                         <Typography variant="body1">

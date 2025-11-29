@@ -48,13 +48,26 @@ class ChatRepository extends BaseRepository {
       findOptions.include = include;
     }
     
-    // Prisma не поддерживает _count в findUnique, используем findFirst
-    if (_count) {
-      findOptions._count = _count;
-      return prisma.chatTopic.findFirst(findOptions);
+    const topic = await prisma.chatTopic.findUnique(findOptions);
+    
+    // Если нужен _count, делаем отдельный запрос для подсчета
+    if (topic && _count && _count.select) {
+      const countPromises = {};
+      if (_count.select.messages) {
+        countPromises.messages = prisma.chatMessage.count({
+          where: { topicId: id }
+        });
+      }
+      
+      const counts = await Promise.all(Object.values(countPromises));
+      const countKeys = Object.keys(countPromises);
+      topic._count = {};
+      countKeys.forEach((key, index) => {
+        topic._count[key] = counts[index];
+      });
     }
     
-    return prisma.chatTopic.findUnique(findOptions);
+    return topic;
   }
 
   /**
