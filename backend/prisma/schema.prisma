@@ -34,7 +34,6 @@ model User {
   // Relations
   coursesAsStudent    CourseEnrollment[]
   coursesAsTeacher    Course[]
-  assignments         Assignment[]
   submissions         Submission[]
   grades              Grade[]
   comments            Comment[]

@@ -2,8 +2,11 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install postgresql-client for health checks
-RUN apk add --no-cache postgresql-client
+# Install dependencies for Prisma and PostgreSQL
+RUN apk add --no-cache \
+    postgresql-client \
+    openssl \
+    libc6-compat
 
 COPY package*.json ./
 COPY prisma ./prisma
