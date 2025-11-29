@@ -28,12 +28,15 @@ import {
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
+import CourseChat from '../../components/CourseChat';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const ManageCourse = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -159,6 +162,7 @@ const ManageCourse = () => {
       <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
         <Tab label="Материалы" />
         <Tab label="Задания" />
+        <Tab label="Чат" />
       </Tabs>
 
       {tabValue === 0 && (
@@ -265,6 +269,12 @@ const ManageCourse = () => {
               ))}
             </List>
           )}
+        </Box>
+      )}
+
+      {tabValue === 2 && (
+        <Box>
+          <CourseChat courseId={id} user={user} course={course} />
         </Box>
       )}
 
