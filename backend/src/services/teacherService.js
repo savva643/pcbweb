@@ -88,6 +88,23 @@ class TeacherService {
   }
 
   /**
+   * Получить список студентов курса
+   * @param {string} courseId - ID курса
+   * @param {string} teacherId - ID преподавателя
+   * @returns {Promise<Array>} Список студентов
+   */
+  async getCourseStudents(courseId, teacherId) {
+    const course = await courseRepository.findById(courseId);
+
+    if (!course || course.teacherId !== teacherId) {
+      throw new Error('Access denied');
+    }
+
+    const enrollments = await courseRepository.findEnrollmentsByCourse(courseId);
+    return enrollments.map(e => e.student);
+  }
+
+  /**
    * Получить детали студента
    * @param {string} courseId - ID курса
    * @param {string} studentId - ID студента

@@ -28,6 +28,27 @@ router.get('/courses/:courseId/stats', authenticate, requireRole('TEACHER'), tea
 
 /**
  * @swagger
+ * /api/teacher/courses/{courseId}/students:
+ *   get:
+ *     summary: Получить список студентов курса (только для преподавателей)
+ *     tags: [Teacher]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Список студентов
+ */
+router.get('/courses/:courseId/students', authenticate, requireRole('TEACHER'), teacherValidators.courseId, teacherController.getCourseStudents);
+
+/**
+ * @swagger
  * /api/teacher/courses/{courseId}/students/{studentId}:
  *   get:
  *     summary: Получить детали студента в курсе (только для преподавателей)

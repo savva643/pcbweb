@@ -27,26 +27,33 @@ class ChatController {
   }
 
   /**
-   * Получить или создать приватную тему
-   * @route GET /api/chat/course/:courseId/private-topic
+   * Получить или создать личный чат
+   * @route POST /api/chat/course/:courseId/personal-chat
    * @param {object} req - Express request
    * @param {object} res - Express response
    */
-  async getPrivateTopic(req, res) {
+  async createPersonalChat(req, res) {
     try {
-      if (req.user.role !== 'TEACHER') {
-        return res.status(403).json({ error: 'Only teachers can access private topics' });
-      }
-
       const { courseId } = req.params;
-      const topic = await chatService.getOrCreatePrivateTopic(courseId, req.user.id);
-      res.json(topic);
+      const { participantId } = req.body;
+
+      const topic = await chatService.getOrCreatePersonalChat(
+        courseId, 
+        req.user.id, 
+        req.user.role,
+        participantId
+      );
+      
+      res.status(201).json(topic);
     } catch (error) {
-      console.error('Get private topic error:', error);
-      if (error.message === 'Access denied') {
+      console.error('Create personal chat error:', error);
+      if (error.message === 'Access denied' || 
+          error.message === 'Student can only create personal chat with course teacher' ||
+          error.message === 'Student not enrolled in this course' ||
+          error.message === 'Teacher must specify participantId') {
         return res.status(403).json({ error: error.message });
       }
-      res.status(500).json({ error: 'Failed to fetch private topic' });
+      res.status(500).json({ error: 'Failed to create personal chat' });
     }
   }
 
@@ -64,12 +71,13 @@ class ChatController {
       }
 
       const { courseId } = req.params;
-      const { title, description, isPrivate } = req.body;
+      const { title, description, isPrivate, participantId } = req.body;
 
       const topic = await chatService.createTopic(courseId, req.user.id, req.user.role, {
         title,
         description,
-        isPrivate
+        isPrivate,
+        participantId
       });
 
       res.status(201).json(topic);

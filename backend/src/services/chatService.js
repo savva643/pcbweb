@@ -44,11 +44,36 @@ class ChatService {
   async getCourseTopics(courseId, userId, userRole) {
     await this.checkCourseAccess(courseId, userId, userRole);
 
-    // Для студентов показываем только публичные темы
-    // Для преподавателя показываем все темы (публичные + приватные)
-    const includePrivate = userRole === 'TEACHER';
+    const course = await courseRepository.findById(courseId);
 
-    return chatRepository.findTopicsByCourse(courseId, includePrivate);
+    // Для студентов показываем публичные темы + личный чат с преподавателем
+    // Для преподавателя показываем все темы (публичные + приватные + личные чаты со студентами)
+    if (userRole === 'STUDENT') {
+      const publicTopics = await chatRepository.findTopicsByCourse(courseId, false);
+      
+      // Получаем личный чат с преподавателем
+      const personalChat = await chatRepository.findPersonalChat(courseId, userId, course.teacherId);
+      
+      // Объединяем: сначала личный чат (если есть), потом публичные
+      return personalChat ? [personalChat, ...publicTopics] : publicTopics;
+    } else {
+      // Для преподавателя показываем все темы, включая личные чаты со студентами
+      const allTopics = await chatRepository.findTopicsByCourse(courseId, true);
+      
+      // Получаем все личные чаты со студентами
+      const enrollments = await courseRepository.findEnrollmentsByCourse(courseId);
+      const personalChats = [];
+      
+      for (const enrollment of enrollments) {
+        const personalChat = await chatRepository.findPersonalChat(courseId, userId, enrollment.studentId);
+        if (personalChat) {
+          personalChats.push(personalChat);
+        }
+      }
+      
+      // Объединяем: сначала личные чаты, потом остальные
+      return [...personalChats, ...allTopics.filter(t => !t.participantId)];
+    }
   }
 
   /**
@@ -60,11 +85,62 @@ class ChatService {
    * @param {string} data.title - Название темы
    * @param {string} [data.description] - Описание темы
    * @param {boolean} [data.isPrivate=false] - Приватная тема
+   * @param {string} [data.participantId] - ID участника для личного чата
    * @returns {Promise<object>} Созданная тема
    */
-  async createTopic(courseId, userId, userRole, { title, description, isPrivate = false }) {
+  async createTopic(courseId, userId, userRole, { title, description, isPrivate = false, participantId = null }) {
     await this.checkCourseAccess(courseId, userId, userRole);
 
+    const course = await courseRepository.findById(courseId);
+
+    // Если создается личный чат
+    if (participantId) {
+      // Проверяем, что участник есть на курсе
+      if (userRole === 'STUDENT') {
+        // Студент может создать личный чат только с преподавателем курса
+        if (participantId !== course.teacherId) {
+          throw new Error('Student can only create personal chat with course teacher');
+        }
+      } else if (userRole === 'TEACHER') {
+        // Преподаватель может создать личный чат со студентом курса
+        const enrollment = await courseRepository.findEnrollment(participantId, courseId);
+        if (!enrollment) {
+          throw new Error('Student not enrolled in this course');
+        }
+      }
+
+      // Проверяем, не существует ли уже личный чат (проверяем в обе стороны)
+      let existingChat = await chatRepository.findPersonalChat(courseId, userId, participantId);
+      if (!existingChat) {
+        existingChat = await chatRepository.findPersonalChat(courseId, participantId, userId);
+      }
+      
+      if (existingChat) {
+        return existingChat;
+      }
+
+      // Создаем личный чат
+      const titleText = userRole === 'STUDENT' 
+        ? `Чат с преподавателем` 
+        : `Чат со студентом`;
+
+      return chatRepository.create({
+        courseId,
+        title: titleText,
+        description: null,
+        isPrivate: true,
+        participantId: participantId,
+        createdBy: userId
+      }, {
+        _count: {
+          select: {
+            messages: true
+          }
+        }
+      });
+    }
+
+    // Обычная тема (публичная или приватная для преподавателя)
     // Только преподаватель может создавать приватные темы
     if (isPrivate && userRole !== 'TEACHER') {
       throw new Error('Only teachers can create private topics');
@@ -75,6 +151,7 @@ class ChatService {
       title,
       description,
       isPrivate: isPrivate || false,
+      participantId: null,
       createdBy: userId
     }, {
       _count: {
@@ -86,29 +163,81 @@ class ChatService {
   }
 
   /**
-   * Получить приватную тему преподавателя (личные сообщения)
+   * Получить или создать личный чат между студентом и преподавателем
    * @param {string} courseId - ID курса
-   * @param {string} teacherId - ID преподавателя
-   * @returns {Promise<object>} Приватная тема
+   * @param {string} userId - ID пользователя (студент или преподаватель)
+   * @param {string} userRole - Роль пользователя
+   * @param {string} [participantId] - ID участника (опционально, для создания нового чата)
+   * @returns {Promise<object>} Личный чат
    */
-  async getOrCreatePrivateTopic(courseId, teacherId) {
-    // Ищем существующую приватную тему
-    let topic = await chatRepository.findPrivateTopic(courseId, teacherId);
+  async getOrCreatePersonalChat(courseId, userId, userRole, participantId = null) {
+    const course = await courseRepository.findById(courseId);
 
-    // Если нет, создаем
-    if (!topic) {
-      const course = await courseRepository.findById(courseId);
+    if (!course) {
+      throw new Error('Course not found');
+    }
 
-      if (!course || course.teacherId !== teacherId) {
+    let targetParticipantId = participantId;
+
+    // Если participantId не указан, определяем его автоматически
+    if (!targetParticipantId) {
+      if (userRole === 'STUDENT') {
+        // Студент хочет чат с преподавателем
+        targetParticipantId = course.teacherId;
+      } else if (userRole === 'TEACHER') {
+        throw new Error('Teacher must specify participantId');
+      }
+    }
+
+    // Проверяем доступ
+    if (userRole === 'STUDENT') {
+      // Студент может создать чат только с преподавателем
+      if (targetParticipantId !== course.teacherId) {
+        throw new Error('Student can only create personal chat with course teacher');
+      }
+      const enrollment = await courseRepository.findEnrollment(userId, courseId);
+      if (!enrollment) {
         throw new Error('Access denied');
       }
+    } else if (userRole === 'TEACHER') {
+      // Преподаватель может создать чат со студентом
+      if (course.teacherId !== userId) {
+        throw new Error('Access denied');
+      }
+      const enrollment = await courseRepository.findEnrollment(targetParticipantId, courseId);
+      if (!enrollment) {
+        throw new Error('Student not enrolled in this course');
+      }
+    }
+
+    // Ищем существующий личный чат
+    // Личный чат может быть создан любым из участников
+    let topic = await chatRepository.findPersonalChat(courseId, userId, targetParticipantId);
+    
+    if (!topic) {
+      // Пробуем найти чат, созданный другим участником
+      topic = await chatRepository.findPersonalChat(courseId, targetParticipantId, userId);
+    }
+
+    // Если чат не найден, создаем новый
+    if (!topic) {
+      const title = userRole === 'STUDENT' 
+        ? `Чат с преподавателем` 
+        : `Чат со студентом`;
 
       topic = await chatRepository.create({
         courseId,
-        title: 'Личные сообщения',
-        description: 'Приватное обсуждение для преподавателя',
+        title,
+        description: null,
         isPrivate: true,
-        createdBy: teacherId
+        participantId: targetParticipantId,
+        createdBy: userId
+      }, {
+        _count: {
+          select: {
+            messages: true
+          }
+        }
       });
     }
 
@@ -132,8 +261,18 @@ class ChatService {
       throw new Error('Topic not found');
     }
 
-    // Если тема приватная, доступ только у преподавателя курса
+    // Если тема приватная
     if (topic.isPrivate) {
+      // Если это личный чат (есть participantId)
+      if (topic.participantId) {
+        // Доступ имеют оба участника
+        if (userId !== topic.createdBy && userId !== topic.participantId) {
+          throw new Error('Access denied');
+        }
+        return topic;
+      }
+      
+      // Старая приватная тема (только для преподавателя)
       if (userRole !== 'TEACHER' || topic.course.teacherId !== userId) {
         throw new Error('Access denied');
       }

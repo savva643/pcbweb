@@ -25,6 +25,24 @@ class TeacherController {
   }
 
   /**
+   * Получить список студентов курса
+   * @route GET /api/teacher/courses/:courseId/students
+   */
+  async getCourseStudents(req, res) {
+    try {
+      const { courseId } = req.params;
+      const students = await teacherService.getCourseStudents(courseId, req.user.id);
+      res.json(students);
+    } catch (error) {
+      console.error('Get course students error:', error);
+      if (error.message === 'Access denied') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to fetch students' });
+    }
+  }
+
+  /**
    * Получить детали студента
    * @route GET /api/teacher/courses/:courseId/students/:studentId
    */

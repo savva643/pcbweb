@@ -43,9 +43,9 @@ router.get('/course/:courseId/topics', authenticate, chatController.getCourseTop
 
 /**
  * @swagger
- * /api/chat/course/{courseId}/private-topic:
- *   get:
- *     summary: Получить или создать приватную тему для преподавателя
+ * /api/chat/course/{courseId}/personal-chat:
+ *   post:
+ *     summary: Создать или получить личный чат
  *     tags: [Chat]
  *     security:
  *       - bearerAuth: []
@@ -56,9 +56,18 @@ router.get('/course/:courseId/topics', authenticate, chatController.getCourseTop
  *         schema:
  *           type: string
  *         description: ID курса
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               participantId:
+ *                 type: string
+ *                 description: ID участника (для преподавателя - ID студента, для студента - не требуется)
  *     responses:
- *       200:
- *         description: Приватная тема
+ *       201:
+ *         description: Личный чат создан или найден
  *         content:
  *           application/json:
  *             schema:
@@ -66,7 +75,7 @@ router.get('/course/:courseId/topics', authenticate, chatController.getCourseTop
  *       403:
  *         description: Доступ запрещен
  */
-router.get('/course/:courseId/private-topic', authenticate, chatController.getPrivateTopic.bind(chatController));
+router.post('/course/:courseId/personal-chat', authenticate, chatController.createPersonalChat.bind(chatController));
 
 /**
  * @swagger

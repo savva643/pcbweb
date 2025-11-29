@@ -21,6 +21,10 @@ class ChatRepository extends BaseRepository {
     const where = { courseId };
     if (!includePrivate) {
       where.isPrivate = false;
+      where.participantId = null; // Исключаем личные чаты
+    } else {
+      // Для преподавателя исключаем личные чаты (они добавляются отдельно)
+      where.participantId = null;
     }
 
     return prisma.chatTopic.findMany({
@@ -37,7 +41,7 @@ class ChatRepository extends BaseRepository {
   }
 
   /**
-   * Найти приватную тему преподавателя
+   * Найти приватную тему преподавателя (старая версия, без participantId)
    * @param {string} courseId - ID курса
    * @param {string} teacherId - ID преподавателя
    * @returns {Promise<object|null>}
@@ -47,7 +51,44 @@ class ChatRepository extends BaseRepository {
       where: {
         courseId,
         isPrivate: true,
-        createdBy: teacherId
+        createdBy: teacherId,
+        participantId: null
+      }
+    });
+  }
+
+  /**
+   * Найти личный чат между двумя участниками
+   * @param {string} courseId - ID курса
+   * @param {string} userId1 - ID первого участника
+   * @param {string} userId2 - ID второго участника
+   * @returns {Promise<object|null>}
+   */
+  async findPersonalChat(courseId, userId1, userId2) {
+    return prisma.chatTopic.findFirst({
+      where: {
+        courseId,
+        isPrivate: true,
+        participantId: {
+          not: null
+        },
+        OR: [
+          {
+            createdBy: userId1,
+            participantId: userId2
+          },
+          {
+            createdBy: userId2,
+            participantId: userId1
+          }
+        ]
+      },
+      include: {
+        _count: {
+          select: {
+            messages: true
+          }
+        }
       }
     });
   }

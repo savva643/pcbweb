@@ -294,7 +294,7 @@ const CourseDetail = () => {
 
       {tabValue === 2 && (
         <Box>
-          <CourseChat courseId={id} user={user} />
+          <CourseChat courseId={id} user={user} course={course} />
         </Box>
       )}
     </Box>

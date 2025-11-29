@@ -158,6 +158,27 @@ class CourseRepository extends BaseRepository {
       }
     });
   }
+
+  /**
+   * Получить все записи на курс
+   * @param {string} courseId - ID курса
+   * @returns {Promise<Array>}
+   */
+  async findEnrollmentsByCourse(courseId) {
+    return prisma.courseEnrollment.findMany({
+      where: { courseId },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+  }
 }
 
 module.exports = new CourseRepository();

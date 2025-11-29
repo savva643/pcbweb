@@ -23,6 +23,10 @@ import {
   Chip,
   Menu,
   MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Autocomplete,
 } from '@mui/material';
 import {
   Send,
@@ -31,12 +35,14 @@ import {
   Edit,
   Chat as ChatIcon,
   Lock,
+  Person,
+  Message,
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-const CourseChat = ({ courseId, user }) => {
+const CourseChat = ({ courseId, user, course }) => {
   const [topics, setTopics] = useState([]);
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -44,6 +50,9 @@ const CourseChat = ({ courseId, user }) => {
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [newTopicDescription, setNewTopicDescription] = useState('');
   const [topicDialogOpen, setTopicDialogOpen] = useState(false);
+  const [personalChatDialogOpen, setPersonalChatDialogOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [contextMenu, setContextMenu] = useState(null);
@@ -53,14 +62,10 @@ const CourseChat = ({ courseId, user }) => {
 
   useEffect(() => {
     fetchTopics();
-  }, [courseId]);
-
-  useEffect(() => {
-    // Для преподавателя автоматически загружаем приватную тему
-    if (user?.role === 'TEACHER' && topics.length === 0 && !loading) {
-      loadPrivateTopic();
+    if (user?.role === 'TEACHER') {
+      fetchStudents();
     }
-  }, [user?.role, topics.length, loading]);
+  }, [courseId]);
 
   useEffect(() => {
     if (selectedTopic) {
@@ -81,31 +86,30 @@ const CourseChat = ({ courseId, user }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadPrivateTopic = async () => {
+  const fetchStudents = async () => {
     try {
-      const response = await axios.get(`${API_URL}/chat/course/${courseId}/private-topic`);
-      const privateTopic = response.data;
-      
-      // Проверяем, есть ли уже эта тема в списке
-      if (!topics.find(t => t.id === privateTopic.id)) {
-        setTopics([privateTopic, ...topics]);
-        if (!selectedTopic) {
-          setSelectedTopic(privateTopic);
-        }
-      }
+      const response = await axios.get(`${API_URL}/teacher/courses/${courseId}/students`);
+      setStudents(response.data);
     } catch (error) {
-      console.error('Load private topic error:', error);
+      console.error('Fetch students error:', error);
     }
   };
 
   const fetchTopics = async () => {
     try {
       const response = await axios.get(`${API_URL}/chat/course/${courseId}/topics`);
-      setTopics(response.data);
+      const topicsData = response.data;
       
-      // Если есть темы, выбираем первую
-      if (response.data.length > 0 && !selectedTopic) {
-        setSelectedTopic(response.data[0]);
+      // Сортируем: личные чаты первыми, потом публичные
+      const personalChats = topicsData.filter(t => t.isPrivate && t.participantId);
+      const publicTopics = topicsData.filter(t => !t.isPrivate);
+      const sortedTopics = [...personalChats, ...publicTopics];
+      
+      setTopics(sortedTopics);
+      
+      // Если есть темы, выбираем первую (личный чат для студента или первая тема)
+      if (sortedTopics.length > 0 && !selectedTopic) {
+        setSelectedTopic(sortedTopics[0]);
       }
     } catch (error) {
       setError('Не удалось загрузить темы');
@@ -121,6 +125,28 @@ const CourseChat = ({ courseId, user }) => {
       setMessages(response.data);
     } catch (error) {
       console.error('Fetch messages error:', error);
+    }
+  };
+
+  const handleCreatePersonalChat = async () => {
+    try {
+      const response = await axios.post(`${API_URL}/chat/course/${courseId}/personal-chat`, {
+        participantId: user?.role === 'TEACHER' ? selectedStudentId : undefined
+      });
+      
+      const newChat = response.data;
+      
+      // Проверяем, нет ли уже этого чата в списке
+      if (!topics.find(t => t.id === newChat.id)) {
+        setTopics([newChat, ...topics]);
+      }
+      
+      setSelectedTopic(newChat);
+      setPersonalChatDialogOpen(false);
+      setSelectedStudentId('');
+    } catch (error) {
+      setError('Не удалось создать личный чат');
+      console.error('Create personal chat error:', error);
     }
   };
 
@@ -196,6 +222,19 @@ const CourseChat = ({ courseId, user }) => {
     return message.author.id === user.id || user.role === 'TEACHER';
   };
 
+  const getTopicTitle = (topic) => {
+    if (topic.isPrivate && topic.participantId) {
+      if (user?.role === 'STUDENT') {
+        return 'Чат с преподавателем';
+      } else {
+        // Для преподавателя нужно найти имя студента
+        const student = students.find(s => s.id === topic.participantId);
+        return student ? `Чат со студентом: ${student.firstName} ${student.lastName}` : 'Личный чат';
+      }
+    }
+    return topic.title;
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
@@ -210,14 +249,51 @@ const CourseChat = ({ courseId, user }) => {
       <Card sx={{ width: '300px', display: 'flex', flexDirection: 'column' }}>
         <CardContent sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Темы обсуждения</Typography>
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={() => setTopicDialogOpen(true)}
-            >
-              <Add />
-            </IconButton>
+            <Typography variant="h6">Обсуждения</Typography>
+            <Box>
+              {user?.role === 'TEACHER' && (
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => setPersonalChatDialogOpen(true)}
+                  sx={{ mr: 1 }}
+                  title="Создать личный чат"
+                >
+                  <Person />
+                </IconButton>
+              )}
+              {user?.role === 'STUDENT' && (
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={async () => {
+                    try {
+                      const response = await axios.post(`${API_URL}/chat/course/${courseId}/personal-chat`, {});
+                      const newChat = response.data;
+                      if (!topics.find(t => t.id === newChat.id)) {
+                        setTopics([newChat, ...topics]);
+                      }
+                      setSelectedTopic(newChat);
+                    } catch (error) {
+                      setError('Не удалось создать личный чат');
+                      console.error('Create personal chat error:', error);
+                    }
+                  }}
+                  sx={{ mr: 1 }}
+                  title="Написать преподавателю"
+                >
+                  <Message />
+                </IconButton>
+              )}
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => setTopicDialogOpen(true)}
+                title="Создать тему"
+              >
+                <Add />
+              </IconButton>
+            </Box>
           </Box>
           <List>
             {topics.map((topic) => (
@@ -240,14 +316,22 @@ const CourseChat = ({ courseId, user }) => {
               >
                 <ListItemAvatar>
                   <Avatar>
-                    {topic.isPrivate ? <Lock /> : <ChatIcon />}
+                    {topic.isPrivate && topic.participantId ? <Person /> : topic.isPrivate ? <Lock /> : <ChatIcon />}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {topic.title}
-                      {topic.isPrivate && (
+                      {getTopicTitle(topic)}
+                      {topic.isPrivate && topic.participantId && (
+                        <Chip
+                          label="Личный"
+                          size="small"
+                          color="secondary"
+                          sx={{ height: 18, fontSize: '0.65rem' }}
+                        />
+                      )}
+                      {topic.isPrivate && !topic.participantId && (
                         <Chip
                           label="Приватная"
                           size="small"
@@ -276,9 +360,17 @@ const CourseChat = ({ courseId, user }) => {
             <CardContent sx={{ flexGrow: 1, overflow: 'auto', p: 2 }} ref={messagesContainerRef}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Typography variant="h6">
-                  {selectedTopic.title}
+                  {getTopicTitle(selectedTopic)}
                 </Typography>
-                {selectedTopic.isPrivate && (
+                {selectedTopic.isPrivate && selectedTopic.participantId && (
+                  <Chip
+                    icon={<Person />}
+                    label="Личный чат"
+                    size="small"
+                    color="secondary"
+                  />
+                )}
+                {selectedTopic.isPrivate && !selectedTopic.participantId && (
                   <Chip
                     icon={<Lock />}
                     label="Приватная тема"
@@ -483,6 +575,39 @@ const CourseChat = ({ courseId, user }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Диалог создания личного чата (для преподавателя) */}
+      {user?.role === 'TEACHER' && (
+        <Dialog open={personalChatDialogOpen} onClose={() => setPersonalChatDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Создать личный чат со студентом</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Выберите студента</InputLabel>
+              <Select
+                value={selectedStudentId}
+                onChange={(e) => setSelectedStudentId(e.target.value)}
+                label="Выберите студента"
+              >
+                {students.map((student) => (
+                  <MenuItem key={student.id} value={student.id}>
+                    {student.firstName} {student.lastName} ({student.email})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPersonalChatDialogOpen(false)}>Отмена</Button>
+            <Button
+              onClick={handleCreatePersonalChat}
+              variant="contained"
+              disabled={!selectedStudentId}
+            >
+              Создать чат
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
 
       {error && (
         <Alert 
