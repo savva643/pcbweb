@@ -382,9 +382,8 @@ class ChatService {
     }
 
     const isAuthor = message.authorId === userId;
-    const isTeacher = userRole === 'TEACHER' && message.topic.course.teacherId === userId;
 
-    if (!isAuthor && !isTeacher) {
+    if (!isAuthor) {
       throw new Error('Access denied');
     }
 

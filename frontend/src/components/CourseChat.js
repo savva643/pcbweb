@@ -219,7 +219,7 @@ const CourseChat = ({ courseId, user, course }) => {
   };
 
   const canDeleteMessage = (message) => {
-    return message.author.id === user.id || user.role === 'TEACHER';
+    return message.author.id === user.id;
   };
 
   const getTopicTitle = (topic) => {
@@ -536,10 +536,12 @@ const CourseChat = ({ courseId, user, course }) => {
             : undefined
         }
       >
-        <MenuItem onClick={handleDeleteMessage}>
-          <Delete fontSize="small" sx={{ mr: 1 }} />
-          Удалить сообщение
-        </MenuItem>
+        {selectedMessageId && messages.find(m => m.id === selectedMessageId)?.author.id === user.id && (
+          <MenuItem onClick={handleDeleteMessage}>
+            <Delete fontSize="small" sx={{ mr: 1 }} />
+            Удалить сообщение
+          </MenuItem>
+        )}
       </Menu>
 
       {/* Диалог создания темы */}
