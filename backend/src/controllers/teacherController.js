@@ -31,7 +31,8 @@ class TeacherController {
   async getCourseStudents(req, res) {
     try {
       const { courseId } = req.params;
-      const students = await teacherService.getCourseStudents(courseId, req.user.id);
+      const { search } = req.query;
+      const students = await teacherService.getCourseStudents(courseId, req.user.id, search);
       res.json(students);
     } catch (error) {
       console.error('Get course students error:', error);

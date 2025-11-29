@@ -8,7 +8,10 @@ import {
   Box,
   Link,
   Alert,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -17,6 +20,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -58,7 +62,7 @@ const Login = () => {
           />
         </Box>
         <Typography component="h1" variant="h4" gutterBottom>
-          Commit to Learn
+          ПСБ обучение
         </Typography>
         <Paper elevation={3} sx={{ p: 4, width: '100%', mt: 2 }}>
           <Typography component="h2" variant="h5" align="center" gutterBottom>
@@ -86,10 +90,22 @@ const Login = () => {
               required
               fullWidth
               label="Пароль"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <Button
               type="submit"

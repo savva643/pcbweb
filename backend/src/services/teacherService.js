@@ -146,9 +146,10 @@ class TeacherService {
    * Получить список студентов курса
    * @param {string} courseId - ID курса
    * @param {string} teacherId - ID преподавателя
+   * @param {string} search - Поисковый запрос (опционально)
    * @returns {Promise<Array>} Список студентов
    */
-  async getCourseStudents(courseId, teacherId) {
+  async getCourseStudents(courseId, teacherId, search = null) {
     const course = await courseRepository.findById(courseId);
 
     if (!course || course.teacherId !== teacherId) {
@@ -156,7 +157,19 @@ class TeacherService {
     }
 
     const enrollments = await courseRepository.findEnrollmentsByCourse(courseId);
-    return enrollments.map(e => e.student);
+    let students = enrollments.map(e => e.student);
+
+    // Фильтрация по поисковому запросу
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase().trim();
+      students = students.filter(student => {
+        const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+        const email = student.email.toLowerCase();
+        return fullName.includes(searchLower) || email.includes(searchLower);
+      });
+    }
+
+    return students;
   }
 
   /**

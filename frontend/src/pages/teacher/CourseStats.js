@@ -208,26 +208,6 @@ const CourseStats = () => {
               {searching ? <CircularProgress size={24} /> : 'Найти'}
             </Button>
           </Box>
-          {searchResults.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              {searchResults.map((student) => (
-                <Card
-                  key={student.id}
-                  sx={{ mb: 1, cursor: 'pointer' }}
-                  onClick={() => handleStudentClick(student.id)}
-                >
-                  <CardContent>
-                    <Typography variant="body1">
-                      {student.firstName} {student.lastName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {student.email}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          )}
         </CardContent>
       </Card>
 
@@ -235,10 +215,12 @@ const CourseStats = () => {
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Студенты курса ({stats?.students?.length || 0})
+            Студенты курса ({searchQuery && searchResults.length > 0 ? searchResults.length : (stats?.students?.length || 0)})
           </Typography>
           {!stats?.students || stats.students.length === 0 ? (
             <Alert severity="info">На курс еще никто не записался</Alert>
+          ) : searchQuery && searchResults.length === 0 ? (
+            <Alert severity="info">Студенты не найдены</Alert>
           ) : (
             <TableContainer>
               <Table>
@@ -253,7 +235,10 @@ const CourseStats = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {stats?.students?.map((student) => (
+                  {(searchQuery && searchResults.length > 0 ? 
+                    stats?.students?.filter(s => searchResults.some(sr => sr.id === s.studentId)) :
+                    stats?.students
+                  )?.map((student) => (
                     <TableRow key={student.studentId} hover>
                       <TableCell>
                         <Typography variant="body1">

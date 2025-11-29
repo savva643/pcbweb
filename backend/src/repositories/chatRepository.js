@@ -48,8 +48,10 @@ class ChatRepository extends BaseRepository {
       findOptions.include = include;
     }
     
+    // Prisma не поддерживает _count в findUnique, используем findFirst
     if (_count) {
       findOptions._count = _count;
+      return prisma.chatTopic.findFirst(findOptions);
     }
     
     return prisma.chatTopic.findUnique(findOptions);
