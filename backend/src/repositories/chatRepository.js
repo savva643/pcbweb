@@ -65,32 +65,53 @@ class ChatRepository extends BaseRepository {
    * @returns {Promise<object|null>}
    */
   async findPersonalChat(courseId, userId1, userId2) {
-    return prisma.chatTopic.findFirst({
+    // Ищем чат, где userId1 - создатель, userId2 - участник
+    const chat1 = await prisma.chatTopic.findFirst({
       where: {
         courseId,
         isPrivate: true,
-        participantId: {
-          not: null
-        },
-        OR: [
-          {
-            createdBy: userId1,
-            participantId: userId2
-          },
-          {
-            createdBy: userId2,
-            participantId: userId1
-          }
-        ]
-      },
-      include: {
-        _count: {
-          select: {
-            messages: true
-          }
-        }
+        participantId: userId2,
+        createdBy: userId1
       }
     });
+    
+    if (chat1) {
+      return prisma.chatTopic.findUnique({
+        where: { id: chat1.id },
+        include: {
+          _count: {
+            select: {
+              messages: true
+            }
+          }
+        }
+      });
+    }
+    
+    // Ищем чат, где userId2 - создатель, userId1 - участник
+    const chat2 = await prisma.chatTopic.findFirst({
+      where: {
+        courseId,
+        isPrivate: true,
+        participantId: userId1,
+        createdBy: userId2
+      }
+    });
+    
+    if (chat2) {
+      return prisma.chatTopic.findUnique({
+        where: { id: chat2.id },
+        include: {
+          _count: {
+            select: {
+              messages: true
+            }
+          }
+        }
+      });
+    }
+    
+    return null;
   }
 
   /**

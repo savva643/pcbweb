@@ -314,7 +314,6 @@ model ChatTopic {
   messages ChatMessage[]
 
   @@map("chat_topics")
-  @@index([courseId, participantId, isPrivate], where: { participantId: { not: null } }) // Индекс для личных чатов
 }
 
 model ChatMessage {

@@ -109,11 +109,9 @@ class ChatService {
         }
       }
 
-      // Проверяем, не существует ли уже личный чат (проверяем в обе стороны)
-      let existingChat = await chatRepository.findPersonalChat(courseId, userId, participantId);
-      if (!existingChat) {
-        existingChat = await chatRepository.findPersonalChat(courseId, participantId, userId);
-      }
+      // Проверяем, не существует ли уже личный чат
+      // Метод findPersonalChat уже проверяет в обе стороны
+      const existingChat = await chatRepository.findPersonalChat(courseId, userId, participantId);
       
       if (existingChat) {
         return existingChat;
@@ -211,13 +209,8 @@ class ChatService {
     }
 
     // Ищем существующий личный чат
-    // Личный чат может быть создан любым из участников
-    let topic = await chatRepository.findPersonalChat(courseId, userId, targetParticipantId);
-    
-    if (!topic) {
-      // Пробуем найти чат, созданный другим участником
-      topic = await chatRepository.findPersonalChat(courseId, targetParticipantId, userId);
-    }
+    // Метод findPersonalChat уже проверяет в обе стороны (кто создатель)
+    const topic = await chatRepository.findPersonalChat(courseId, userId, targetParticipantId);
 
     // Если чат не найден, создаем новый
     if (!topic) {
