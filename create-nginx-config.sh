@@ -54,3 +54,4 @@ echo "sudo rm -f /etc/nginx/sites-enabled/default"
 echo "sudo nginx -t"
 echo "sudo systemctl restart nginx"
 
+

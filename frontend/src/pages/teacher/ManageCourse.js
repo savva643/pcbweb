@@ -137,9 +137,17 @@ const ManageCourse = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">{course.title}</Typography>
-        <Button variant="outlined" onClick={() => navigate('/teacher')}>
-          ← Назад
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            onClick={() => navigate(`/teacher/course/${id}/stats`)}
+          >
+            Статистика
+          </Button>
+          <Button variant="outlined" onClick={() => navigate('/teacher')}>
+            ← Назад
+          </Button>
+        </Box>
       </Box>
 
       {error && (

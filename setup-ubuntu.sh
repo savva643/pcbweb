@@ -57,3 +57,4 @@ echo "   2. Запустите проект: docker compose up -d --build"
 echo "   3. Проверьте логи: docker compose logs -f"
 echo ""
 
+

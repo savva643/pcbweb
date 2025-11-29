@@ -237,3 +237,4 @@ docker exec -it commit-to-learn-db psql -U commit_user -d commit_to_learn
 docker stats
 ```
 
+

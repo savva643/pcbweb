@@ -48,3 +48,4 @@ echo "   docker compose logs -f"
 echo "   sudo tail -f /var/log/nginx/error.log"
 echo ""
 
+

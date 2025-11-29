@@ -55,6 +55,7 @@ router.post('/', authenticate, requireRole('STUDENT'), upload.single('file'), [
     });
 
     const fileUrl = `/uploads/${req.file.filename}`;
+    const { comment } = req.body; // Комментарий к версии
 
     let submission;
     if (existingSubmission) {
@@ -70,6 +71,25 @@ router.post('/', authenticate, requireRole('STUDENT'), upload.single('file'), [
           grade: true
         }
       });
+
+      // Get latest version number
+      const latestVersion = await prisma.submissionVersion.findFirst({
+        where: { submissionId: existingSubmission.id },
+        orderBy: { version: 'desc' },
+        select: { version: true }
+      });
+
+      const nextVersion = (latestVersion?.version || 0) + 1;
+
+      // Create new version
+      await prisma.submissionVersion.create({
+        data: {
+          submissionId: existingSubmission.id,
+          version: nextVersion,
+          fileUrl,
+          comment: comment || null
+        }
+      });
     } else {
       // Create new submission
       submission = await prisma.submission.create({
@@ -82,6 +102,16 @@ router.post('/', authenticate, requireRole('STUDENT'), upload.single('file'), [
         include: {
           assignment: true,
           grade: true
+        }
+      });
+
+      // Create initial version
+      await prisma.submissionVersion.create({
+        data: {
+          submissionId: submission.id,
+          version: 1,
+          fileUrl,
+          comment: comment || null
         }
       });
     }
@@ -313,5 +343,96 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
+// Get submission versions (student can see own, teacher can see all)
+router.get('/:id/versions', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get submission
+    const submission = await prisma.submission.findUnique({
+      where: { id },
+      include: {
+        assignment: {
+          include: { course: true }
+        }
+      }
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    // Check access
+    if (req.user.role === 'STUDENT' && submission.studentId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (req.user.role === 'TEACHER' && submission.assignment.course.teacherId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Get all versions
+    const versions = await prisma.submissionVersion.findMany({
+      where: { submissionId: id },
+      orderBy: { version: 'desc' }
+    });
+
+    res.json(versions);
+  } catch (error) {
+    console.error('Get submission versions error:', error);
+    res.status(500).json({ error: 'Failed to fetch versions' });
+  }
+});
+
+// Get specific submission version
+router.get('/:id/versions/:version', authenticate, async (req, res) => {
+  try {
+    const { id, version } = req.params;
+
+    // Get submission
+    const submission = await prisma.submission.findUnique({
+      where: { id },
+      include: {
+        assignment: {
+          include: { course: true }
+        }
+      }
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    // Check access
+    if (req.user.role === 'STUDENT' && submission.studentId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (req.user.role === 'TEACHER' && submission.assignment.course.teacherId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Get version
+    const submissionVersion = await prisma.submissionVersion.findUnique({
+      where: {
+        submissionId_version: {
+          submissionId: id,
+          version: parseInt(version)
+        }
+      }
+    });
+
+    if (!submissionVersion) {
+      return res.status(404).json({ error: 'Version not found' });
+    }
+
+    res.json(submissionVersion);
+  } catch (error) {
+    console.error('Get submission version error:', error);
+    res.status(500).json({ error: 'Failed to fetch version' });
+  }
+});
+
 module.exports = router;
+
 

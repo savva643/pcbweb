@@ -84,3 +84,4 @@ curl http://localhost:3001/api/health
 sudo systemctl status nginx
 sudo tail -f /var/log/nginx/error.log
 
+

@@ -14,6 +14,8 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import CreateCourse from './pages/teacher/CreateCourse';
 import ManageCourse from './pages/teacher/ManageCourse';
 import ReviewAssignment from './pages/teacher/ReviewAssignment';
+import CourseStats from './pages/teacher/CourseStats';
+import StudentDetails from './pages/teacher/StudentDetails';
 import Profile from './pages/Profile';
 
 function App() {
@@ -36,6 +38,8 @@ function App() {
                   <Route path="/teacher" element={<TeacherDashboard />} />
                   <Route path="/teacher/create-course" element={<CreateCourse />} />
                   <Route path="/teacher/course/:id" element={<ManageCourse />} />
+                  <Route path="/teacher/course/:id/stats" element={<CourseStats />} />
+                  <Route path="/teacher/course/:courseId/student/:studentId" element={<StudentDetails />} />
                   <Route path="/teacher/assignment/:id" element={<ReviewAssignment />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="*" element={<Navigate to="/" replace />} />

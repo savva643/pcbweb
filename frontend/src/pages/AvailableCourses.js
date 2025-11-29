@@ -159,3 +159,4 @@ const AvailableCourses = () => {
 
 export default AvailableCourses;
 
+

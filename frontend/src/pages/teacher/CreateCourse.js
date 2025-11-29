@@ -8,6 +8,9 @@ import {
   Box,
   Alert,
   CircularProgress,
+  FormControlLabel,
+  Switch,
+  FormHelperText,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -18,6 +21,8 @@ const CreateCourse = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    isPrivate: false,
+    allowedEmails: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -78,6 +83,28 @@ const CreateCourse = () => {
               rows={4}
               margin="normal"
             />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isPrivate}
+                  onChange={(e) => setFormData({ ...formData, isPrivate: e.target.checked })}
+                />
+              }
+              label="Персональный курс (доступен только указанным студентам)"
+              sx={{ mt: 2 }}
+            />
+            {formData.isPrivate && (
+              <TextField
+                fullWidth
+                label="Email студентов (через запятую)"
+                name="allowedEmails"
+                value={formData.allowedEmails}
+                onChange={handleChange}
+                margin="normal"
+                helperText="Укажите email адреса студентов через запятую, например: student1@test.com, student2@test.com"
+                placeholder="student1@test.com, student2@test.com"
+              />
+            )}
             <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
               <Button
                 type="submit"

@@ -39,3 +39,4 @@ echo "   2. Получите сертификат: sudo certbot --nginx -d pcb.k
 echo "   3. Раскомментируйте HTTPS секцию в nginx/nginx.conf"
 echo ""
 
+
