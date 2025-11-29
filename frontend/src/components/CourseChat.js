@@ -21,6 +21,8 @@ import {
   Alert,
   CircularProgress,
   Chip,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Send,
@@ -28,6 +30,7 @@ import {
   Delete,
   Edit,
   Chat as ChatIcon,
+  Lock,
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -43,12 +46,21 @@ const CourseChat = ({ courseId, user }) => {
   const [topicDialogOpen, setTopicDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [contextMenu, setContextMenu] = useState(null);
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
   useEffect(() => {
     fetchTopics();
   }, [courseId]);
+
+  useEffect(() => {
+    // Для преподавателя автоматически загружаем приватную тему
+    if (user?.role === 'TEACHER' && topics.length === 0 && !loading) {
+      loadPrivateTopic();
+    }
+  }, [user?.role, topics.length, loading]);
 
   useEffect(() => {
     if (selectedTopic) {
@@ -69,10 +81,29 @@ const CourseChat = ({ courseId, user }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const loadPrivateTopic = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/chat/course/${courseId}/private-topic`);
+      const privateTopic = response.data;
+      
+      // Проверяем, есть ли уже эта тема в списке
+      if (!topics.find(t => t.id === privateTopic.id)) {
+        setTopics([privateTopic, ...topics]);
+        if (!selectedTopic) {
+          setSelectedTopic(privateTopic);
+        }
+      }
+    } catch (error) {
+      console.error('Load private topic error:', error);
+    }
+  };
+
   const fetchTopics = async () => {
     try {
       const response = await axios.get(`${API_URL}/chat/course/${courseId}/topics`);
       setTopics(response.data);
+      
+      // Если есть темы, выбираем первую
       if (response.data.length > 0 && !selectedTopic) {
         setSelectedTopic(response.data[0]);
       }
@@ -100,6 +131,7 @@ const CourseChat = ({ courseId, user }) => {
       const response = await axios.post(`${API_URL}/chat/course/${courseId}/topics`, {
         title: newTopicTitle,
         description: newTopicDescription,
+        isPrivate: false,
       });
       setTopics([...topics, response.data]);
       setSelectedTopic(response.data);
@@ -128,14 +160,40 @@ const CourseChat = ({ courseId, user }) => {
     }
   };
 
-  const handleDeleteMessage = async (messageId) => {
+  const handleContextMenu = (event, messageId) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6,
+          }
+        : null,
+    );
+    setSelectedMessageId(messageId);
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+    setSelectedMessageId(null);
+  };
+
+  const handleDeleteMessage = async () => {
+    if (!selectedMessageId) return;
+
     try {
-      await axios.delete(`${API_URL}/chat/messages/${messageId}`);
-      setMessages(messages.filter((m) => m.id !== messageId));
+      await axios.delete(`${API_URL}/chat/messages/${selectedMessageId}`);
+      setMessages(messages.filter((m) => m.id !== selectedMessageId));
+      handleCloseContextMenu();
     } catch (error) {
       setError('Не удалось удалить сообщение');
       console.error('Delete message error:', error);
+      handleCloseContextMenu();
     }
+  };
+
+  const canDeleteMessage = (message) => {
+    return message.author.id === user.id || user.role === 'TEACHER';
   };
 
   if (loading) {
@@ -182,11 +240,23 @@ const CourseChat = ({ courseId, user }) => {
               >
                 <ListItemAvatar>
                   <Avatar>
-                    <ChatIcon />
+                    {topic.isPrivate ? <Lock /> : <ChatIcon />}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={topic.title}
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {topic.title}
+                      {topic.isPrivate && (
+                        <Chip
+                          label="Приватная"
+                          size="small"
+                          color="secondary"
+                          sx={{ height: 18, fontSize: '0.65rem' }}
+                        />
+                      )}
+                    </Box>
+                  }
                   secondary={
                     <Typography variant="caption" noWrap>
                       {topic._count?.messages || topic.messageCount || 0} сообщений
@@ -204,9 +274,19 @@ const CourseChat = ({ courseId, user }) => {
         {selectedTopic ? (
           <>
             <CardContent sx={{ flexGrow: 1, overflow: 'auto', p: 2 }} ref={messagesContainerRef}>
-              <Typography variant="h6" gutterBottom>
-                {selectedTopic.title}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Typography variant="h6">
+                  {selectedTopic.title}
+                </Typography>
+                {selectedTopic.isPrivate && (
+                  <Chip
+                    icon={<Lock />}
+                    label="Приватная тема"
+                    size="small"
+                    color="secondary"
+                  />
+                )}
+              </Box>
               {selectedTopic.description && (
                 <Typography variant="body2" color="text.secondary" paragraph>
                   {selectedTopic.description}
@@ -230,6 +310,7 @@ const CourseChat = ({ courseId, user }) => {
                               justifyContent: isOwnMessage ? 'flex-end' : 'flex-start',
                               mb: 1,
                             }}
+                            onContextMenu={(e) => canDeleteMessage(message) && handleContextMenu(e, message.id)}
                           >
                             {!isOwnMessage && (
                               <Avatar sx={{ width: 32, height: 32, mr: 1 }}>
@@ -242,6 +323,7 @@ const CourseChat = ({ courseId, user }) => {
                                 maxWidth: '70%',
                                 bgcolor: isOwnMessage ? 'primary.main' : 'grey.100',
                                 color: isOwnMessage ? 'white' : 'text.primary',
+                                cursor: canDeleteMessage(message) ? 'context-menu' : 'default',
                               }}
                             >
                               {!isOwnMessage && (
@@ -273,15 +355,6 @@ const CourseChat = ({ courseId, user }) => {
                                 {message.author.firstName[0]}
                               </Avatar>
                             )}
-                            {isOwnMessage && (
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDeleteMessage(message.id)}
-                                sx={{ ml: 1 }}
-                              >
-                                <Delete fontSize="small" />
-                              </IconButton>
-                            )}
                           </Box>
                         )}
                         {!showAvatar && (
@@ -291,6 +364,7 @@ const CourseChat = ({ courseId, user }) => {
                               justifyContent: isOwnMessage ? 'flex-end' : 'flex-start',
                               mb: 1,
                             }}
+                            onContextMenu={(e) => canDeleteMessage(message) && handleContextMenu(e, message.id)}
                           >
                             <Paper
                               sx={{
@@ -300,6 +374,7 @@ const CourseChat = ({ courseId, user }) => {
                                 mr: isOwnMessage ? 5 : 0,
                                 bgcolor: isOwnMessage ? 'primary.main' : 'grey.100',
                                 color: isOwnMessage ? 'white' : 'text.primary',
+                                cursor: canDeleteMessage(message) ? 'context-menu' : 'default',
                               }}
                             >
                               <Typography variant="body1">{message.content}</Typography>
@@ -314,15 +389,6 @@ const CourseChat = ({ courseId, user }) => {
                                 {new Date(message.createdAt).toLocaleString('ru-RU')}
                               </Typography>
                             </Paper>
-                            {isOwnMessage && (
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDeleteMessage(message.id)}
-                                sx={{ ml: 1 }}
-                              >
-                                <Delete fontSize="small" />
-                              </IconButton>
-                            )}
                           </Box>
                         )}
                       </Box>
@@ -367,6 +433,23 @@ const CourseChat = ({ courseId, user }) => {
         )}
       </Card>
 
+      {/* Контекстное меню */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleDeleteMessage}>
+          <Delete fontSize="small" sx={{ mr: 1 }} />
+          Удалить сообщение
+        </MenuItem>
+      </Menu>
+
       {/* Диалог создания темы */}
       <Dialog open={topicDialogOpen} onClose={() => setTopicDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Создать новую тему</DialogTitle>
@@ -402,7 +485,11 @@ const CourseChat = ({ courseId, user }) => {
       </Dialog>
 
       {error && (
-        <Alert severity="error" onClose={() => setError('')} sx={{ position: 'fixed', bottom: 16, right: 16 }}>
+        <Alert 
+          severity="error" 
+          onClose={() => setError('')} 
+          sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 9999 }}
+        >
           {error}
         </Alert>
       )}
@@ -411,4 +498,3 @@ const CourseChat = ({ courseId, user }) => {
 };
 
 export default CourseChat;
-

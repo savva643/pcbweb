@@ -304,6 +304,7 @@ model ChatTopic {
   courseId    String
   title       String
   description String?
+  isPrivate   Boolean  @default(false) // Приватная тема только для преподавателя
   createdAt   DateTime @default(now())
   createdBy   String   // user ID
 
