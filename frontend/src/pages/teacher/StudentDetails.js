@@ -71,6 +71,14 @@ const StudentDetails = () => {
     return <Alert severity="error">{error || 'Студент не найден'}</Alert>;
   }
 
+  if (!data.progress) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box className="page-enter">
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>

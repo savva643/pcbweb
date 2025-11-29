@@ -206,10 +206,77 @@ class TeacherService {
       })
     );
 
+    // Получаем материалы для расчета прогресса
+    const materials = await prisma.material.findMany({
+      where: { courseId }
+    });
+
+    // Получаем записи прогресса по материалам
+    const progressRecords = await prisma.progress.findMany({
+      where: {
+        courseId,
+        studentId,
+        completed: true,
+        materialId: { not: null }
+      }
+    });
+
+    const completedMaterials = progressRecords.length;
+    const totalMaterials = materials.length;
+    const materialProgress = totalMaterials > 0 ? (completedMaterials / totalMaterials) * 100 : 0;
+
+    // Получаем отправки студента
+    const submissions = await prisma.submission.findMany({
+      where: {
+        studentId,
+        assignmentId: {
+          in: assignments.map(a => a.id)
+        }
+      },
+      include: {
+        grade: true
+      }
+    });
+
+    const completedAssignments = submissions.filter(s => s.status === 'GRADED').length;
+    const totalAssignments = assignments.length;
+    const assignmentProgress = totalAssignments > 0 ? (completedAssignments / totalAssignments) * 100 : 0;
+
+    // Рассчитываем общий прогресс
+    const overallProgress = (materialProgress + assignmentProgress) / 2;
+
+    // Рассчитываем средний балл и общие баллы
+    const gradedSubmissions = submissions.filter(s => s.grade);
+    let totalScore = 0;
+    let totalMaxScore = 0;
+    gradedSubmissions.forEach(submission => {
+      if (submission.grade) {
+        totalScore += submission.grade.score;
+        totalMaxScore += submission.grade.maxScore;
+      }
+    });
+    const averageGrade = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
+
     return {
       student,
       course,
-      assignments: assignmentsWithSubmissions
+      assignments: assignmentsWithSubmissions,
+      progress: {
+        materials: {
+          completed: completedMaterials,
+          total: totalMaterials,
+          progress: materialProgress
+        },
+        assignments: {
+          completed: completedAssignments,
+          total: totalAssignments,
+          progress: assignmentProgress
+        },
+        overall: overallProgress,
+        averageGrade: averageGrade,
+        totalScore: totalScore,
+        totalMaxScore: totalMaxScore
+      }
     };
   }
 }
