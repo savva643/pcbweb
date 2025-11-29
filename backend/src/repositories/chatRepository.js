@@ -12,6 +12,54 @@ class ChatRepository extends BaseRepository {
   }
 
   /**
+   * Создать тему с поддержкой _count
+   * @param {object} data - Данные темы
+   * @param {object} options - Опции (include, _count)
+   * @returns {Promise<object>}
+   */
+  async create(data, options = {}) {
+    const { include = {}, _count } = options;
+    
+    const createOptions = {
+      data
+    };
+    
+    if (Object.keys(include).length > 0) {
+      createOptions.include = include;
+    }
+    
+    if (_count) {
+      createOptions._count = _count;
+    }
+    
+    return prisma.chatTopic.create(createOptions);
+  }
+
+  /**
+   * Найти тему по ID с поддержкой _count
+   * @param {string} id - ID темы
+   * @param {object} options - Опции (include, _count)
+   * @returns {Promise<object|null>}
+   */
+  async findById(id, options = {}) {
+    const { include = {}, _count } = options;
+    
+    const findOptions = {
+      where: { id }
+    };
+    
+    if (Object.keys(include).length > 0) {
+      findOptions.include = include;
+    }
+    
+    if (_count) {
+      findOptions._count = _count;
+    }
+    
+    return prisma.chatTopic.findUnique(findOptions);
+  }
+
+  /**
    * Получить все темы курса
    * @param {string} courseId - ID курса
    * @param {boolean} includePrivate - Включить приватные темы

@@ -13,14 +13,25 @@ class BaseRepository {
   /**
    * Найти запись по ID
    * @param {string} id - ID записи
-   * @param {object} include - Включить связанные данные
+   * @param {object} options - Опции (include, _count)
    * @returns {Promise<object|null>}
    */
-  async findById(id, include = {}) {
-    return this.prisma[this.model].findUnique({
-      where: { id },
-      include
-    });
+  async findById(id, options = {}) {
+    const { include = {}, _count } = options;
+    
+    const findOptions = {
+      where: { id }
+    };
+    
+    if (Object.keys(include).length > 0) {
+      findOptions.include = include;
+    }
+    
+    if (_count) {
+      findOptions._count = _count;
+    }
+    
+    return this.prisma[this.model].findUnique(findOptions);
   }
 
   /**

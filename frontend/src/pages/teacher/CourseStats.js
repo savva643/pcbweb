@@ -101,7 +101,7 @@ const CourseStats = () => {
           Назад
         </Button>
         <Typography variant="h4">
-          Статистика курса: {stats?.course.title}
+          Статистика курса: {stats?.course?.title || 'Загрузка...'}
         </Typography>
       </Box>
 
@@ -111,61 +111,69 @@ const CourseStats = () => {
         </Alert>
       )}
 
+      {!stats && !loading && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Статистика пока недоступна
+        </Alert>
+      )}
+
       {/* Сводная статистика */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <People color="primary" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h4" color="primary">
-                {stats?.summary.totalStudents || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Студентов
-              </Typography>
-            </CardContent>
-          </Card>
+      {stats && stats.summary && (
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <People color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                <Typography variant="h4" color="primary">
+                  {stats.summary.totalStudents || 0}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Студентов
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Assignment color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                <Typography variant="h4" color="primary">
+                  {stats.summary.totalAssignments || 0}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Заданий
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <TrendingUp color="success" sx={{ fontSize: 40, mb: 1 }} />
+                <Typography variant="h4" color="success.main">
+                  {stats.summary.gradedSubmissions || 0} / {stats.summary.totalSubmissions || 0}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Проверено работ
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Star color="warning" sx={{ fontSize: 40, mb: 1 }} />
+                <Typography variant="h4" color="warning.main">
+                  {stats.summary.averageGrade || 0}%
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Средний балл
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Assignment color="primary" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h4" color="primary">
-                {stats?.summary.totalAssignments || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Заданий
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <TrendingUp color="success" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h4" color="success.main">
-                {stats?.summary.gradedSubmissions || 0} / {stats?.summary.totalSubmissions || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Проверено работ
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Star color="warning" sx={{ fontSize: 40, mb: 1 }} />
-              <Typography variant="h4" color="warning.main">
-                {stats?.summary.averageGrade || 0}%
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Средний балл
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      )}
 
       {/* Поиск студента */}
       <Card sx={{ mb: 3 }}>
@@ -227,9 +235,9 @@ const CourseStats = () => {
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Студенты курса ({stats?.students.length || 0})
+            Студенты курса ({stats?.students?.length || 0})
           </Typography>
-          {stats?.students.length === 0 ? (
+          {!stats?.students || stats.students.length === 0 ? (
             <Alert severity="info">На курс еще никто не записался</Alert>
           ) : (
             <TableContainer>
@@ -245,7 +253,7 @@ const CourseStats = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {stats?.students.map((student) => (
+                  {stats?.students?.map((student) => (
                     <TableRow key={student.studentId} hover>
                       <TableCell>
                         <Typography variant="body1">

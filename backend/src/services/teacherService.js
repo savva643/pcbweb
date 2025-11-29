@@ -75,14 +75,69 @@ class TeacherService {
 
     const averageGrade = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
 
+    // Получаем материалы для расчета прогресса
+    const materials = await prisma.material.findMany({
+      where: { courseId }
+    });
+
+    // Формируем статистику по каждому студенту
+    const studentsStats = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const studentId = enrollment.student.id;
+        
+        // Получаем отправки студента
+        const studentSubmissions = submissions.filter(s => s.studentId === studentId);
+        const studentGraded = studentSubmissions.filter(s => s.grade);
+        
+        // Рассчитываем средний балл студента
+        let studentScore = 0;
+        let studentMaxScore = 0;
+        studentGraded.forEach(submission => {
+          if (submission.grade) {
+            studentScore += submission.grade.score;
+            studentMaxScore += submission.grade.maxScore;
+          }
+        });
+        const studentAverage = studentMaxScore > 0 ? (studentScore / studentMaxScore) * 100 : 0;
+
+        // Получаем прогресс по материалам
+        const progressRecords = await prisma.progress.findMany({
+          where: {
+            courseId,
+            studentId,
+            completed: true,
+            materialId: { not: null }
+          }
+        });
+        const completedMaterials = progressRecords.length;
+        const materialProgress = materials.length > 0 ? (completedMaterials / materials.length) * 100 : 0;
+        
+        // Прогресс по заданиям
+        const assignmentProgress = totalAssignments > 0 ? (studentGraded.length / totalAssignments) * 100 : 0;
+        const overallProgress = (materialProgress + assignmentProgress) / 2;
+
+        return {
+          studentId: enrollment.student.id,
+          studentName: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+          studentEmail: enrollment.student.email,
+          progress: Math.round(overallProgress),
+          averageGrade: Math.round(studentAverage),
+          submissionsCount: studentSubmissions.length,
+          gradedCount: studentGraded.length
+        };
+      })
+    );
+
     return {
       course,
-      totalStudents,
-      totalAssignments,
-      totalSubmissions,
-      gradedSubmissions,
-      averageGrade: Math.round(averageGrade),
-      students: enrollments.map(e => e.student),
+      summary: {
+        totalStudents,
+        totalAssignments,
+        totalSubmissions,
+        gradedSubmissions,
+        averageGrade: Math.round(averageGrade)
+      },
+      students: studentsStats,
       submissions
     };
   }

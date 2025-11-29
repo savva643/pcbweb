@@ -122,7 +122,7 @@ class ChatService {
         ? `Чат с преподавателем` 
         : `Чат со студентом`;
 
-      return chatRepository.create({
+      const newTopic = await chatRepository.create({
         courseId,
         title: titleText,
         description: null,
@@ -136,6 +136,19 @@ class ChatService {
           }
         }
       });
+      
+      // Если тема создана, но не содержит _count, добавляем его
+      if (newTopic && !newTopic._count) {
+        return chatRepository.findById(newTopic.id, {
+          _count: {
+            select: {
+              messages: true
+            }
+          }
+        });
+      }
+      
+      return newTopic;
     }
 
     // Обычная тема (публичная или приватная для преподавателя)
@@ -144,7 +157,7 @@ class ChatService {
       throw new Error('Only teachers can create private topics');
     }
 
-    return chatRepository.create({
+    const newTopic = await chatRepository.create({
       courseId,
       title,
       description,
@@ -158,6 +171,19 @@ class ChatService {
         }
       }
     });
+    
+    // Если тема создана, но не содержит _count, добавляем его
+    if (newTopic && !newTopic._count) {
+      return chatRepository.findById(newTopic.id, {
+        _count: {
+          select: {
+            messages: true
+          }
+        }
+      });
+    }
+    
+    return newTopic;
   }
 
   /**
@@ -218,7 +244,7 @@ class ChatService {
         ? `Чат с преподавателем` 
         : `Чат со студентом`;
 
-      topic = await chatRepository.create({
+      const newTopic = await chatRepository.create({
         courseId,
         title,
         description: null,
@@ -232,6 +258,19 @@ class ChatService {
           }
         }
       });
+      
+      // Если тема создана, но не содержит _count, добавляем его
+      if (newTopic && !newTopic._count) {
+        topic = await chatRepository.findById(newTopic.id, {
+          _count: {
+            select: {
+              messages: true
+            }
+          }
+        });
+      } else {
+        topic = newTopic;
+      }
     }
 
     return topic;
