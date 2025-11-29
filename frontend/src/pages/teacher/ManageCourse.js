@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -8,9 +8,6 @@ import {
   Tabs,
   Tab,
   List,
-  ListItem,
-  ListItemText,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,11 +23,8 @@ import {
 } from '@mui/material';
 import {
   Add,
-  Edit,
-  Delete,
   VideoLibrary,
   Description,
-  Assignment,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -41,7 +35,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 const ManageCourse = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -64,11 +57,7 @@ const ManageCourse = () => {
   });
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchCourseData();
-  }, [id]);
-
-  const fetchCourseData = async () => {
+  const fetchCourseData = useCallback(async () => {
     try {
       const [courseRes, materialsRes, assignmentsRes] = await Promise.all([
         axios.get(`${API_URL}/courses/${id}`),
@@ -85,7 +74,11 @@ const ManageCourse = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchCourseData();
+  }, [fetchCourseData]);
 
   const handleMaterialSubmit = async () => {
     try {

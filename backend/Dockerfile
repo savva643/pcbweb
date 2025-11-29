@@ -25,5 +25,5 @@ RUN mkdir -p uploads
 # Make init script executable
 RUN chmod +x init-db.sh || true
 
-CMD ["sh", "-c", "sleep 5 && npx prisma db push --accept-data-loss || npx prisma migrate deploy && npm run dev"]
+CMD ["sh", "-c", "sleep 5 && npx prisma db push --accept-data-loss || npx prisma migrate deploy && (npm run seed || true) && npm run dev"]
 

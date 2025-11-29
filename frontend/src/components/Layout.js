@@ -3,7 +3,6 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  Button,
   Box,
   Drawer,
   List,
@@ -59,13 +58,11 @@ const Layout = ({ children }) => {
     ? [
         { text: 'Панель преподавателя', icon: <School />, path: '/teacher' },
         { text: 'Мои курсы', icon: <Book />, path: '/teacher' },
-        { text: 'Профиль', icon: <Person />, path: '/profile' },
       ]
     : [
         { text: 'Главная', icon: <Dashboard />, path: '/' },
         { text: 'Мои курсы', icon: <Book />, path: '/' },
         { text: 'Мои задания', icon: <Assignment />, path: '/submissions' },
-        { text: 'Профиль', icon: <Person />, path: '/profile' },
       ];
 
   const drawer = (
@@ -137,6 +134,13 @@ const Layout = ({ children }) => {
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
             >
+              <MenuItem onClick={() => { navigate('/profile'); handleMenuClose(); }}>
+                <ListItemIcon>
+                  <Person fontSize="small" />
+                </ListItemIcon>
+                Профиль
+              </MenuItem>
+              <Divider />
               <MenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <Logout fontSize="small" />

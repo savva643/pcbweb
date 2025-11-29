@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -7,9 +7,6 @@ import {
   Tabs,
   Tab,
   List,
-  ListItem,
-  ListItemText,
-  ListItemButton,
   CircularProgress,
   Alert,
   Chip,
@@ -22,7 +19,6 @@ import {
   ExpandMore,
   VideoLibrary,
   Description,
-  Assignment,
   CheckCircle,
   RadioButtonUnchecked,
 } from '@mui/icons-material';
@@ -44,14 +40,7 @@ const CourseDetail = () => {
   const [error, setError] = useState('');
   const [tabValue, setTabValue] = useState(0);
 
-  useEffect(() => {
-    fetchCourseData();
-    if (user?.role === 'STUDENT') {
-      fetchProgress();
-    }
-  }, [id]);
-
-  const fetchCourseData = async () => {
+  const fetchCourseData = useCallback(async () => {
     try {
       const [courseRes, materialsRes, assignmentsRes] = await Promise.all([
         axios.get(`${API_URL}/courses/${id}`),
@@ -68,16 +57,23 @@ const CourseDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchProgress = async () => {
+  const fetchProgress = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/progress/course/${id}`);
       setProgress(response.data);
     } catch (error) {
       console.error('Fetch progress error:', error);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchCourseData();
+    if (user?.role === 'STUDENT') {
+      fetchProgress();
+    }
+  }, [fetchCourseData, fetchProgress, user?.role]);
 
   const markMaterialComplete = async (materialId) => {
     try {

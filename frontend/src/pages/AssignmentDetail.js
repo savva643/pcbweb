@@ -32,11 +32,7 @@ const AssignmentDetail = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    fetchAssignment();
-  }, [id]);
-
-  const fetchAssignment = async () => {
+  const fetchAssignment = React.useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/assignments/${id}`);
       setAssignment(response.data);
@@ -49,7 +45,11 @@ const AssignmentDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchAssignment();
+  }, [fetchAssignment]);
 
   const handleFileChange = (e) => {
     if (e.target.files[0]) {

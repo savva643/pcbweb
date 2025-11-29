@@ -24,7 +24,6 @@ import {
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../../contexts/AuthContext';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -43,11 +42,7 @@ const ReviewAssignment = () => {
   });
   const [commentText, setCommentText] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, [id]);
-
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     try {
       const assignmentRes = await axios.get(`${API_URL}/assignments/${id}`);
       setAssignment(assignmentRes.data);
@@ -60,7 +55,11 @@ const ReviewAssignment = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleGrade = async (submissionId) => {
     try {

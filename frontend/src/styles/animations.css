@@ -32,35 +32,97 @@
   }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .page-enter {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.4s ease-out;
 }
 
 .card-enter {
-  animation: scaleIn 0.4s ease-out;
+  animation: scaleIn 0.5s ease-out;
 }
 
 .slide-enter {
-  animation: slideIn 0.3s ease-out;
+  animation: slideIn 0.4s ease-out;
+}
+
+/* Анимация для появления элементов списка */
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.4s ease-out;
 }
 
 /* Плавные переходы для карточек */
 .MuiCard-root {
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  animation: fadeInUp 0.6s ease-out;
 }
 
 .MuiCard-root:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
 }
 
 /* Анимация для кнопок */
 .MuiButton-root {
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+
+.MuiButton-root:hover {
+  transform: scale(1.05);
 }
 
 /* Анимация для списков */
 .MuiListItem-root {
-  transition: background-color 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
+  animation: slideInRight 0.4s ease-out;
+}
+
+.MuiListItem-root:nth-child(1) { animation-delay: 0.1s; }
+.MuiListItem-root:nth-child(2) { animation-delay: 0.2s; }
+.MuiListItem-root:nth-child(3) { animation-delay: 0.3s; }
+.MuiListItem-root:nth-child(4) { animation-delay: 0.4s; }
+.MuiListItem-root:nth-child(5) { animation-delay: 0.5s; }
+
+/* Анимация для таблиц */
+.MuiTableRow-root {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Анимация для диалогов */
+.MuiDialog-root {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* Анимация для чипов */
+.MuiChip-root {
+  transition: all 0.2s ease-in-out;
+}
+
+.MuiChip-root:hover {
+  transform: scale(1.1);
 }
 

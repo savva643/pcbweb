@@ -8,22 +8,25 @@ import {
   Divider,
   Chip,
 } from '@mui/material';
-import { Person, Email, School, CalendarToday } from '@mui/icons-material';
+import { Person, Email, School, Logout } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@mui/material';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) {
     return null;
   }
 
   return (
-    <Box className="page-enter">
+    <Box className="page-enter" sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
       <Typography variant="h4" gutterBottom>
         Профиль
       </Typography>
-      <Card sx={{ maxWidth: 600, mt: 3 }} className="card-enter">
+      <Card sx={{ mt: 3, p: 4 }} className="card-enter">
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
             <Avatar sx={{ width: 80, height: 80, fontSize: '2rem' }}>
@@ -54,6 +57,18 @@ const Profile = () => {
                 <strong>Роль:</strong> {user.role === 'STUDENT' ? 'Студент' : 'Преподаватель'}
               </Typography>
             </Box>
+          </Box>
+          <Divider sx={{ my: 3 }} />
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<Logout />}
+              onClick={logout}
+              size="large"
+            >
+              Выйти из аккаунта
+            </Button>
           </Box>
         </CardContent>
       </Card>
