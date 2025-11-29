@@ -57,7 +57,6 @@ const Layout = ({ children }) => {
   const menuItems = user?.role === 'TEACHER' 
     ? [
         { text: 'Панель преподавателя', icon: <School />, path: '/teacher' },
-        { text: 'Мои курсы', icon: <Book />, path: '/teacher' },
       ]
     : [
         { text: 'Главная', icon: <Dashboard />, path: '/' },

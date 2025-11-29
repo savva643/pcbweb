@@ -25,6 +25,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import CourseChat from '../components/CourseChat';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -145,6 +146,7 @@ const CourseDetail = () => {
       <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
         <Tab label="Материалы" />
         <Tab label="Задания" />
+        <Tab label="Чат" />
       </Tabs>
 
       {tabValue === 0 && (
@@ -287,6 +289,12 @@ const CourseDetail = () => {
               })}
             </List>
           )}
+        </Box>
+      )}
+
+      {tabValue === 2 && (
+        <Box>
+          <CourseChat courseId={id} user={user} />
         </Box>
       )}
     </Box>
