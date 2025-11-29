@@ -14,7 +14,6 @@ import {
 import { Add, Book, People, Assignment } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 

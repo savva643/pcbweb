@@ -23,6 +23,7 @@ app.use('/api/materials', require('./routes/materials'));
 app.use('/api/assignments', require('./routes/assignments'));
 app.use('/api/submissions', require('./routes/submissions'));
 app.use('/api/progress', require('./routes/progress'));
+app.use('/api/stats', require('./routes/stats'));
 
 // Health check
 app.get('/api/health', (req, res) => {

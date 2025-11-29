@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import CourseDetail from './pages/CourseDetail';
 import AssignmentDetail from './pages/AssignmentDetail';
 import MySubmissions from './pages/MySubmissions';
+import MyCourses from './pages/MyCourses';
 import TeacherDashboard from './pages/TeacherDashboard';
 import CreateCourse from './pages/teacher/CreateCourse';
 import ManageCourse from './pages/teacher/ManageCourse';
@@ -30,6 +31,7 @@ function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/course/:id" element={<CourseDetail />} />
                   <Route path="/assignment/:id" element={<AssignmentDetail />} />
+                  <Route path="/my-courses" element={<MyCourses />} />
                   <Route path="/submissions" element={<MySubmissions />} />
                   <Route path="/teacher" element={<TeacherDashboard />} />
                   <Route path="/teacher/create-course" element={<CreateCourse />} />

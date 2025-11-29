@@ -5,6 +5,57 @@ const { authenticate, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Get all available courses (for students: all courses, for teachers: own courses)
+router.get('/available', authenticate, requireRole('STUDENT'), async (req, res) => {
+  try {
+    // Get all courses
+    const allCourses = await prisma.course.findMany({
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        },
+        _count: {
+          select: {
+            materials: true,
+            assignments: true,
+            enrollments: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Get enrolled courses for this student
+    const enrollments = await prisma.courseEnrollment.findMany({
+      where: {
+        studentId: req.user.id
+      },
+      select: {
+        courseId: true
+      }
+    });
+
+    const enrolledCourseIds = new Set(enrollments.map(e => e.courseId));
+
+    // Mark which courses are enrolled
+    const coursesWithEnrollment = allCourses.map(course => ({
+      ...course,
+      isEnrolled: enrolledCourseIds.has(course.id)
+    }));
+
+    res.json(coursesWithEnrollment);
+  } catch (error) {
+    console.error('Get available courses error:', error);
+    res.status(500).json({ error: 'Failed to fetch courses' });
+  }
+});
+
 // Get all courses (for students: enrolled, for teachers: own courses)
 router.get('/', authenticate, async (req, res) => {
   try {

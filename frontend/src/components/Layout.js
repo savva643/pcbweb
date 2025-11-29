@@ -61,7 +61,7 @@ const Layout = ({ children }) => {
       ]
     : [
         { text: 'Главная', icon: <Dashboard />, path: '/' },
-        { text: 'Мои курсы', icon: <Book />, path: '/' },
+        { text: 'Мои курсы', icon: <Book />, path: '/my-courses' },
         { text: 'Мои задания', icon: <Assignment />, path: '/submissions' },
       ];
 

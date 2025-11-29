@@ -22,12 +22,31 @@ const Dashboard = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [enrolling, setEnrolling] = useState({});
   const navigate = useNavigate();
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    if (user?.role === 'STUDENT') {
+      // Для студентов показываем доступные курсы для записи
+      fetchAvailableCourses();
+    } else {
+      // Для преподавателей показываем их курсы
+      fetchCourses();
+    }
+  }, [user?.role]);
+
+  const fetchAvailableCourses = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/courses/available`);
+      setCourses(response.data);
+    } catch (error) {
+      setError('Не удалось загрузить курсы');
+      console.error('Fetch courses error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCourses = async () => {
     try {
@@ -41,6 +60,23 @@ const Dashboard = () => {
     }
   };
 
+  const handleEnroll = async (courseId) => {
+    setEnrolling({ ...enrolling, [courseId]: true });
+    setError('');
+    try {
+      await axios.post(`${API_URL}/courses/${courseId}/enroll`);
+      // Обновляем список курсов
+      const updatedCourses = courses.map(course =>
+        course.id === courseId ? { ...course, isEnrolled: true } : course
+      );
+      setCourses(updatedCourses);
+    } catch (error) {
+      setError(error.response?.data?.error || 'Не удалось записаться на курс');
+    } finally {
+      setEnrolling({ ...enrolling, [courseId]: false });
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
@@ -49,18 +85,19 @@ const Dashboard = () => {
     );
   }
 
-  if (error) {
-    return <Alert severity="error">{error}</Alert>;
-  }
-
-  if (courses.length === 0) {
+  if (courses.length === 0 && !loading) {
     return (
-      <Box textAlign="center" py={4}>
+      <Box textAlign="center" py={4} className="page-enter">
         <Typography variant="h5" gutterBottom>
           {user?.role === 'STUDENT'
-            ? 'Вы еще не записаны на курсы'
+            ? 'Нет доступных курсов'
             : 'У вас пока нет курсов'}
         </Typography>
+        {user?.role === 'STUDENT' && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Курсы появятся здесь после их создания преподавателями
+          </Typography>
+        )}
         {user?.role === 'TEACHER' && (
           <Button
             variant="contained"
@@ -77,8 +114,18 @@ const Dashboard = () => {
   return (
     <Box className="page-enter">
       <Typography variant="h4" gutterBottom>
-        {user?.role === 'STUDENT' ? 'Мои курсы' : 'Мои курсы'}
+        {user?.role === 'STUDENT' ? 'Доступные курсы' : 'Мои курсы'}
       </Typography>
+      {user?.role === 'STUDENT' && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Выберите курс для записи или откройте уже записанный курс
+        </Typography>
+      )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
       <Grid container spacing={3} sx={{ mt: 1 }}>
         {courses.map((course, index) => (
           <Grid item xs={12} sm={6} md={4} key={course.id}>
@@ -95,6 +142,14 @@ const Dashboard = () => {
                   {course.description || 'Нет описания'}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}>
+                  {user?.role === 'STUDENT' && course.teacher && (
+                    <Chip
+                      icon={<People />}
+                      label={`${course.teacher.firstName} ${course.teacher.lastName}`}
+                      size="small"
+                      color="primary"
+                    />
+                  )}
                   <Chip
                     icon={<Book />}
                     label={`${course._count?.materials || 0} материалов`}
@@ -112,21 +167,42 @@ const Dashboard = () => {
                       size="small"
                     />
                   )}
+                  {user?.role === 'STUDENT' && course.isEnrolled && (
+                    <Chip
+                      label="Записан"
+                      color="success"
+                      size="small"
+                    />
+                  )}
                 </Box>
-                {user?.role === 'STUDENT' && course.teacher && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    Преподаватель: {course.teacher.firstName} {course.teacher.lastName}
-                  </Typography>
-                )}
               </CardContent>
               <CardActions>
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() => navigate(`/course/${course.id}`)}
-                >
-                  Открыть
-                </Button>
+                {user?.role === 'STUDENT' && course.isEnrolled ? (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => navigate(`/course/${course.id}`)}
+                  >
+                    Открыть курс
+                  </Button>
+                ) : user?.role === 'STUDENT' ? (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => handleEnroll(course.id)}
+                    disabled={enrolling[course.id]}
+                  >
+                    {enrolling[course.id] ? 'Запись...' : 'Записаться на курс'}
+                  </Button>
+                ) : (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => navigate(`/course/${course.id}`)}
+                  >
+                    Открыть
+                  </Button>
+                )}
               </CardActions>
             </Card>
           </Grid>
