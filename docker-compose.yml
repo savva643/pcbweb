@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: commit-to-learn-db
+    environment:
+      POSTGRES_USER: commit_user
+      POSTGRES_PASSWORD: commit_password
+      POSTGRES_DB: commit_to_learn
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+      # Optional: uncomment to use custom postgresql.conf
+      # POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Init script runs automatically on first container start
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      # Optional: uncomment to use custom postgresql.conf
+      # - ./backend/database/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commit_user -d commit_to_learn"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Optional: uncomment to use custom config file
+    # command: postgres -c config_file=/etc/postgresql/postgresql.conf
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: commit-to-learn-backend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://commit_user:commit_password@postgres:5432/commit_to_learn
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      PORT: 3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: commit-to-learn-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001/api
+      CHOKIDAR_USEPOLLING: true
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+  uploads:
+

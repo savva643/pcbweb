@@ -1,0 +1,11 @@
+{
+  "name": "commit-to-learn",
+  "version": "1.0.0",
+  "description": "Educational platform Commit to Learn",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}
+
