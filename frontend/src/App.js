@@ -13,6 +13,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import CreateCourse from './pages/teacher/CreateCourse';
 import ManageCourse from './pages/teacher/ManageCourse';
 import ReviewAssignment from './pages/teacher/ReviewAssignment';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
                   <Route path="/teacher/create-course" element={<CreateCourse />} />
                   <Route path="/teacher/course/:id" element={<ManageCourse />} />
                   <Route path="/teacher/assignment/:id" element={<ReviewAssignment />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Layout>

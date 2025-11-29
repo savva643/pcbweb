@@ -59,28 +59,27 @@ const Layout = ({ children }) => {
     ? [
         { text: 'Панель преподавателя', icon: <School />, path: '/teacher' },
         { text: 'Мои курсы', icon: <Book />, path: '/teacher' },
+        { text: 'Профиль', icon: <Person />, path: '/profile' },
       ]
     : [
         { text: 'Главная', icon: <Dashboard />, path: '/' },
         { text: 'Мои курсы', icon: <Book />, path: '/' },
         { text: 'Мои задания', icon: <Assignment />, path: '/submissions' },
+        { text: 'Профиль', icon: <Person />, path: '/profile' },
       ];
 
   const drawer = (
     <Box>
       <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <img
             src="/logo.png"
             alt="Logo"
-            style={{ height: 40, width: 'auto' }}
+            style={{ height: 40, width: 'auto', maxWidth: '100%' }}
             onError={(e) => {
               e.target.style.display = 'none';
             }}
           />
-          <Typography variant="h6" noWrap component="div">
-            Commit to Learn
-          </Typography>
         </Box>
       </Toolbar>
       <Divider />

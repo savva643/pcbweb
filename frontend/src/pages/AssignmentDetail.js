@@ -121,7 +121,7 @@ const AssignmentDetail = () => {
   }
 
   return (
-    <Box>
+    <Box className="page-enter">
       <Button onClick={() => navigate(-1)} sx={{ mb: 2 }}>
         ← Назад к курсу
       </Button>

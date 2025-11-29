@@ -75,14 +75,18 @@ const Dashboard = () => {
   }
 
   return (
-    <Box>
+    <Box className="page-enter">
       <Typography variant="h4" gutterBottom>
         {user?.role === 'STUDENT' ? 'Мои курсы' : 'Мои курсы'}
       </Typography>
       <Grid container spacing={3} sx={{ mt: 1 }}>
-        {courses.map((course) => (
+        {courses.map((course, index) => (
           <Grid item xs={12} sm={6} md={4} key={course.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Card 
+              sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+              className="card-enter"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
               <CardContent sx={{ flexGrow: 1 }}>
                 <Typography variant="h6" component="h2" gutterBottom>
                   {course.title}

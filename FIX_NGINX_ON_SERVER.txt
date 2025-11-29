@@ -1,0 +1,86 @@
+# Команды для исправления Nginx на сервере
+# Выполните на сервере последовательно
+
+# ============================================
+# 1. СОЗДАНИЕ КОНФИГУРАЦИИ NGINX
+# ============================================
+sudo tee /etc/nginx/sites-available/commit-to-learn > /dev/null << 'EOF'
+server {
+    listen 80;
+    server_name pcb.keep-pixel.ru 144.31.69.129;
+
+    # Frontend
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Backend API
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+    }
+
+    # Uploads
+    location /uploads {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+
+# ============================================
+# 2. АКТИВАЦИЯ КОНФИГУРАЦИИ
+# ============================================
+sudo ln -sf /etc/nginx/sites-available/commit-to-learn /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# ============================================
+# 3. ПРОВЕРКА И ПЕРЕЗАПУСК NGINX
+# ============================================
+sudo nginx -t
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+
+# ============================================
+# 4. ПРОВЕРКА ЧТО КОНТЕЙНЕРЫ ЗАПУЩЕНЫ
+# ============================================
+cd ~/projects/pcbweb
+docker compose ps
+
+# Если контейнеры не запущены:
+docker compose up -d
+
+# Проверка логов:
+docker compose logs backend
+docker compose logs frontend
+
+# ============================================
+# 5. ПРОВЕРКА ДОСТУПНОСТИ
+# ============================================
+curl http://localhost:3000
+curl http://localhost:3001/api/health
+
+# ============================================
+# 6. ПРОВЕРКА NGINX
+# ============================================
+sudo systemctl status nginx
+sudo tail -f /var/log/nginx/error.log
+

@@ -57,6 +57,8 @@ services:
     environment:
       REACT_APP_API_URL: http://pcb.keep-pixel.ru/api
       CHOKIDAR_USEPOLLING: true
+      DANGEROUSLY_DISABLE_HOST_CHECK: "true"
+      HOST: "0.0.0.0"
     depends_on:
       - backend
     volumes:

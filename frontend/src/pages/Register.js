@@ -55,6 +55,7 @@ const Register = () => {
   return (
     <Container component="main" maxWidth="xs">
       <Box
+        className="page-enter"
         sx={{
           marginTop: 8,
           display: 'flex',

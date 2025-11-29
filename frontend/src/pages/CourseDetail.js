@@ -114,7 +114,7 @@ const CourseDetail = () => {
   }
 
   return (
-    <Box>
+    <Box className="page-enter">
       <Typography variant="h4" gutterBottom>
         {course.title}
       </Typography>

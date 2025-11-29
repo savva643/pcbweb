@@ -68,7 +68,7 @@ const MySubmissions = () => {
   }
 
   return (
-    <Box>
+    <Box className="page-enter">
       <Typography variant="h4" gutterBottom>
         Мои задания
       </Typography>

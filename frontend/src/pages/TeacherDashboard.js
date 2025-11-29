@@ -50,7 +50,7 @@ const TeacherDashboard = () => {
   }
 
   return (
-    <Box>
+    <Box className="page-enter">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Мои курсы</Typography>
         <Button
