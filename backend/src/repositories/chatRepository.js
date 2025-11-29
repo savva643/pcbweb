@@ -12,13 +12,13 @@ class ChatRepository extends BaseRepository {
   }
 
   /**
-   * Создать тему с поддержкой _count
+   * Создать тему
    * @param {object} data - Данные темы
-   * @param {object} options - Опции (include, _count)
+   * @param {object} options - Опции (include)
    * @returns {Promise<object>}
    */
   async create(data, options = {}) {
-    const { include = {}, _count } = options;
+    const { include = {} } = options;
     
     const createOptions = {
       data
@@ -26,10 +26,6 @@ class ChatRepository extends BaseRepository {
     
     if (Object.keys(include).length > 0) {
       createOptions.include = include;
-    }
-    
-    if (_count) {
-      createOptions._count = _count;
     }
     
     return prisma.chatTopic.create(createOptions);

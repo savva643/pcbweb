@@ -129,26 +129,16 @@ class ChatService {
         isPrivate: true,
         participantId: participantId,
         createdBy: userId
-      }, {
+      });
+      
+      // Получаем тему с _count
+      return chatRepository.findById(newTopic.id, {
         _count: {
           select: {
             messages: true
           }
         }
       });
-      
-      // Если тема создана, но не содержит _count, добавляем его
-      if (newTopic && !newTopic._count) {
-        return chatRepository.findById(newTopic.id, {
-          _count: {
-            select: {
-              messages: true
-            }
-          }
-        });
-      }
-      
-      return newTopic;
     }
 
     // Обычная тема (публичная или приватная для преподавателя)
@@ -164,26 +154,16 @@ class ChatService {
       isPrivate: isPrivate || false,
       participantId: null,
       createdBy: userId
-    }, {
+    });
+    
+    // Получаем тему с _count
+    return chatRepository.findById(newTopic.id, {
       _count: {
         select: {
           messages: true
         }
       }
     });
-    
-    // Если тема создана, но не содержит _count, добавляем его
-    if (newTopic && !newTopic._count) {
-      return chatRepository.findById(newTopic.id, {
-        _count: {
-          select: {
-            messages: true
-          }
-        }
-      });
-    }
-    
-    return newTopic;
   }
 
   /**
@@ -251,26 +231,16 @@ class ChatService {
         isPrivate: true,
         participantId: targetParticipantId,
         createdBy: userId
-      }, {
+      });
+      
+      // Получаем тему с _count
+      topic = await chatRepository.findById(newTopic.id, {
         _count: {
           select: {
             messages: true
           }
         }
       });
-      
-      // Если тема создана, но не содержит _count, добавляем его
-      if (newTopic && !newTopic._count) {
-        topic = await chatRepository.findById(newTopic.id, {
-          _count: {
-            select: {
-              messages: true
-            }
-          }
-        });
-      } else {
-        topic = newTopic;
-      }
     }
 
     return topic;
