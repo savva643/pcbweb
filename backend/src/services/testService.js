@@ -215,6 +215,11 @@ class TestService {
       throw new Error('Test not found');
     }
 
+    // Проверяем, можно ли еще проходить тест
+    if (!test.isActive || (test.closedAt && new Date(test.closedAt) < new Date())) {
+      throw new Error('Test is closed');
+    }
+
     const attempt = await testRepository.findAttemptById(attemptId);
 
     if (!attempt || attempt.testId !== testId || attempt.studentId !== studentId) {
@@ -281,9 +286,68 @@ class TestService {
     await testRepository.createAnswers(answerRecords);
 
     // Обновить попытку
-    return testRepository.updateAttempt(attemptId, {
+    const updatedAttempt = await testRepository.updateAttempt(attemptId, {
       score: totalScore,
       completedAt: new Date()
+    });
+
+    // Если тест с автоматической проверкой, создаем запись успеваемости
+    if (test.autoGrade) {
+      try {
+        const gradeRecordService = require('./gradeRecordService');
+        const courseRepository = require('../repositories/courseRepository');
+        const course = await courseRepository.findById(test.courseId);
+        
+        // Находим группу, к которой относится курс
+        const prisma = require('../config/database');
+        const groupAssignment = await prisma.groupCourseAssignment.findFirst({
+          where: { courseId: test.courseId }
+        });
+
+        if (groupAssignment) {
+          await gradeRecordService.createGradeRecordFromGrade(
+            studentId,
+            groupAssignment.groupId,
+            'TEST',
+            testId,
+            totalScore,
+            test.maxScore,
+            course.teacherId,
+            'PRESENT'
+          );
+        }
+      } catch (error) {
+        console.error('Failed to create grade record for test:', error);
+        // Не прерываем выполнение
+      }
+    }
+
+    return updatedAttempt;
+  }
+
+  /**
+   * Закрыть/открыть тест
+   * @param {string} testId - ID теста
+   * @param {string} teacherId - ID преподавателя
+   * @param {boolean} isActive - Активен ли тест
+   * @param {Date} closedAt - Дата закрытия (опционально)
+   * @returns {Promise<object>}
+   */
+  async setTestActive(testId, teacherId, isActive, closedAt = null) {
+    const test = await testRepository.findById(testId);
+    if (!test) {
+      throw new Error('Test not found');
+    }
+
+    const courseRepository = require('../repositories/courseRepository');
+    const course = await courseRepository.findById(test.courseId);
+    if (!course || course.teacherId !== teacherId) {
+      throw new Error('Access denied');
+    }
+
+    return testRepository.update(testId, { 
+      isActive,
+      closedAt: closedAt || (isActive ? null : new Date())
     });
   }
 }

@@ -1,0 +1,246 @@
+const homeworkRepository = require('../repositories/homeworkRepository');
+const groupRepository = require('../repositories/groupRepository');
+const gradeRecordService = require('./gradeRecordService');
+const prisma = require('../config/database');
+
+class HomeworkService {
+  /**
+   * Получить домашние задания группы
+   * @param {string} groupId - ID группы
+   * @param {string} userId - ID пользователя
+   * @param {string} userRole - Роль пользователя
+   * @returns {Promise<Array>}
+   */
+  async getGroupHomeworks(groupId, userId, userRole) {
+    const hasAccess = await groupRepository.isMember(groupId, userId, userRole);
+    if (!hasAccess) {
+      throw new Error('Access denied');
+    }
+
+    return homeworkRepository.findByGroup(groupId);
+  }
+
+  /**
+   * Получить детали домашнего задания
+   * @param {string} homeworkId - ID домашнего задания
+   * @param {string} userId - ID пользователя
+   * @param {string} userRole - Роль пользователя
+   * @returns {Promise<object>}
+   */
+  async getHomeworkDetails(homeworkId, userId, userRole) {
+    const homework = await homeworkRepository.findByIdWithDetails(homeworkId);
+    if (!homework) {
+      throw new Error('Homework not found');
+    }
+
+    const hasAccess = await groupRepository.isMember(homework.groupId, userId, userRole);
+    if (!hasAccess) {
+      throw new Error('Access denied');
+    }
+
+    return homework;
+  }
+
+  /**
+   * Создать домашнее задание
+   * @param {string} groupId - ID группы
+   * @param {string} teacherId - ID преподавателя
+   * @param {object} data - Данные домашнего задания
+   * @returns {Promise<object>}
+   */
+  async createHomework(groupId, teacherId, data) {
+    const group = await groupRepository.findById(groupId);
+    if (!group || group.teacherId !== teacherId) {
+      throw new Error('Access denied');
+    }
+
+    return homeworkRepository.create({
+      ...data,
+      groupId
+    });
+  }
+
+  /**
+   * Обновить домашнее задание
+   * @param {string} homeworkId - ID домашнего задания
+   * @param {string} teacherId - ID преподавателя
+   * @param {object} data - Данные для обновления
+   * @returns {Promise<object>}
+   */
+  async updateHomework(homeworkId, teacherId, data) {
+    const homework = await homeworkRepository.findById(homeworkId);
+    if (!homework) {
+      throw new Error('Homework not found');
+    }
+
+    const group = await groupRepository.findById(homework.groupId);
+    if (!group || group.teacherId !== teacherId) {
+      throw new Error('Access denied');
+    }
+
+    return homeworkRepository.update(homeworkId, data);
+  }
+
+  /**
+   * Удалить домашнее задание
+   * @param {string} homeworkId - ID домашнего задания
+   * @param {string} teacherId - ID преподавателя
+   * @returns {Promise<void>}
+   */
+  async deleteHomework(homeworkId, teacherId) {
+    const homework = await homeworkRepository.findById(homeworkId);
+    if (!homework) {
+      throw new Error('Homework not found');
+    }
+
+    const group = await groupRepository.findById(homework.groupId);
+    if (!group || group.teacherId !== teacherId) {
+      throw new Error('Access denied');
+    }
+
+    return homeworkRepository.delete(homeworkId);
+  }
+
+  /**
+   * Отправить домашнее задание
+   * @param {string} homeworkId - ID домашнего задания
+   * @param {string} studentId - ID студента
+   * @param {string} fileUrl - URL файла
+   * @returns {Promise<object>}
+   */
+  async submitHomework(homeworkId, studentId, fileUrl) {
+    const homework = await homeworkRepository.findById(homeworkId);
+    if (!homework) {
+      throw new Error('Homework not found');
+    }
+
+    // Проверяем, является ли студент участником группы
+    const hasAccess = await groupRepository.isMember(homework.groupId, studentId, 'STUDENT');
+    if (!hasAccess) {
+      throw new Error('Access denied');
+    }
+
+    // Проверяем, можно ли еще отправлять
+    if (!homework.isActive) {
+      throw new Error('Homework is closed');
+    }
+
+    // Проверяем, есть ли уже отправка
+    const existingSubmission = await homeworkRepository.findSubmission(homeworkId, studentId);
+    
+    if (existingSubmission) {
+      // Обновляем существующую отправку
+      return homeworkRepository.updateSubmission(existingSubmission.id, {
+        fileUrl,
+        status: 'SUBMITTED',
+        updatedAt: new Date()
+      });
+    } else {
+      // Создаем новую отправку
+      return homeworkRepository.createSubmission({
+        homeworkId,
+        studentId,
+        fileUrl,
+        status: 'SUBMITTED'
+      });
+    }
+  }
+
+  /**
+   * Оценить домашнее задание
+   * @param {string} submissionId - ID отправки
+   * @param {string} teacherId - ID преподавателя
+   * @param {object} data - Данные оценки
+   * @returns {Promise<object>}
+   */
+  async gradeHomework(submissionId, teacherId, data) {
+    const submission = await prisma.homeworkSubmission.findUnique({
+      where: { id: submissionId },
+      include: {
+        homework: {
+          include: {
+            group: true
+          }
+        }
+      }
+    });
+
+    if (!submission) {
+      throw new Error('Submission not found');
+    }
+
+    const group = submission.homework.group;
+    if (group.teacherId !== teacherId) {
+      throw new Error('Access denied');
+    }
+
+    // Проверяем, есть ли уже оценка
+    const existingGrade = await prisma.homeworkGrade.findUnique({
+      where: { submissionId }
+    });
+
+    if (existingGrade) {
+      // Обновляем существующую оценку
+      await homeworkRepository.updateGrade(submissionId, {
+        ...data,
+        gradedBy: teacherId
+      });
+    } else {
+      // Создаем новую оценку
+      await homeworkRepository.createGrade({
+        submissionId,
+        studentId: submission.studentId,
+        ...data,
+        gradedBy: teacherId
+      });
+    }
+
+    // Обновляем статус отправки
+    await homeworkRepository.updateSubmission(submissionId, {
+      status: 'GRADED'
+    });
+
+    // Создаем запись успеваемости
+    try {
+      await gradeRecordService.createGradeRecordFromGrade(
+        submission.studentId,
+        submission.homework.groupId,
+        'HOMEWORK',
+        submission.homeworkId,
+        data.score,
+        data.maxScore || submission.homework.maxScore,
+        teacherId,
+        'PRESENT'
+      );
+    } catch (error) {
+      console.error('Failed to create grade record:', error);
+      // Не прерываем выполнение, если не удалось создать запись
+    }
+
+    return homeworkRepository.findSubmission(submission.homeworkId, submission.studentId);
+  }
+
+  /**
+   * Закрыть/открыть домашнее задание
+   * @param {string} homeworkId - ID домашнего задания
+   * @param {string} teacherId - ID преподавателя
+   * @param {boolean} isActive - Активно ли задание
+   * @returns {Promise<object>}
+   */
+  async setHomeworkActive(homeworkId, teacherId, isActive) {
+    const homework = await homeworkRepository.findById(homeworkId);
+    if (!homework) {
+      throw new Error('Homework not found');
+    }
+
+    const group = await groupRepository.findById(homework.groupId);
+    if (!group || group.teacherId !== teacherId) {
+      throw new Error('Access denied');
+    }
+
+    return homeworkRepository.update(homeworkId, { isActive });
+  }
+}
+
+module.exports = new HomeworkService();
+

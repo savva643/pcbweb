@@ -35,6 +35,8 @@ app.use('/api/stats', require('./routes/stats'));
 app.use('/api/teacher', require('./routes/teacher'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/groups', require('./routes/groups'));
+app.use('/api/homeworks', require('./routes/homeworks'));
 
 // Health check
 /**

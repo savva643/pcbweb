@@ -1,5 +1,6 @@
 const chatRepository = require('../repositories/chatRepository');
 const courseRepository = require('../repositories/courseRepository');
+const groupRepository = require('../repositories/groupRepository');
 
 /**
  * Сервис для работы с чатом
@@ -256,11 +257,21 @@ class ChatService {
    */
   async checkTopicAccess(topicId, userId, userRole) {
     const topic = await chatRepository.findById(topicId, {
-      course: true
+      course: true,
+      group: true
     });
 
     if (!topic) {
       throw new Error('Topic not found');
+    }
+
+    // Если тема группы
+    if (topic.groupId) {
+      const hasAccess = await groupRepository.isMember(topic.groupId, userId, userRole);
+      if (!hasAccess) {
+        throw new Error('Access denied');
+      }
+      return topic;
     }
 
     // Если тема приватная
@@ -359,6 +370,84 @@ class ChatService {
 
     await chatRepository.deleteMessage(messageId);
     return { success: true };
+  }
+
+  /**
+   * Получить темы группы
+   * @param {string} groupId - ID группы
+   * @param {string} userId - ID пользователя
+   * @param {string} userRole - Роль пользователя
+   * @returns {Promise<Array>} Список тем
+   */
+  async getGroupTopics(groupId, userId, userRole) {
+    const hasAccess = await groupRepository.isMember(groupId, userId, userRole);
+    if (!hasAccess) {
+      throw new Error('Access denied');
+    }
+
+    return chatRepository.findTopicsByGroup(groupId);
+  }
+
+  /**
+   * Создать тему для группы
+   * @param {string} groupId - ID группы
+   * @param {string} userId - ID пользователя
+   * @param {string} userRole - Роль пользователя
+   * @param {object} data - Данные темы
+   * @returns {Promise<object>} Созданная тема
+   */
+  async createGroupTopic(groupId, userId, userRole, { title, description }) {
+    const hasAccess = await groupRepository.isMember(groupId, userId, userRole);
+    if (!hasAccess) {
+      throw new Error('Access denied');
+    }
+
+    const newTopic = await chatRepository.create({
+      groupId,
+      courseId: null,
+      title,
+      description,
+      isPrivate: false,
+      participantId: null,
+      createdBy: userId
+    });
+
+    return chatRepository.findById(newTopic.id, {
+      _count: {
+        select: {
+          messages: true
+        }
+      }
+    });
+  }
+
+  /**
+   * Проверка доступа к теме группы
+   * @param {string} topicId - ID темы
+   * @param {string} userId - ID пользователя
+   * @param {string} userRole - Роль пользователя
+   * @returns {Promise<object>} Тема
+   * @throws {Error} Если доступ запрещен
+   */
+  async checkGroupTopicAccess(topicId, userId, userRole) {
+    const topic = await chatRepository.findById(topicId, {
+      group: true
+    });
+
+    if (!topic) {
+      throw new Error('Topic not found');
+    }
+
+    if (!topic.groupId) {
+      throw new Error('Topic is not a group topic');
+    }
+
+    const hasAccess = await groupRepository.isMember(topic.groupId, userId, userRole);
+    if (!hasAccess) {
+      throw new Error('Access denied');
+    }
+
+    return topic;
   }
 }
 

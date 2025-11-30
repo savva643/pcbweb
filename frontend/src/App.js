@@ -16,6 +16,10 @@ import ManageCourse from './pages/teacher/ManageCourse';
 import ReviewAssignment from './pages/teacher/ReviewAssignment';
 import CourseStats from './pages/teacher/CourseStats';
 import StudentDetails from './pages/teacher/StudentDetails';
+import Groups from './pages/teacher/Groups';
+import GroupDetail from './pages/teacher/GroupDetail';
+import StudentGroups from './pages/student/Groups';
+import StudentGroupDetail from './pages/student/GroupDetail';
 import Profile from './pages/Profile';
 
 function App() {
@@ -41,6 +45,10 @@ function App() {
                   <Route path="/teacher/course/:id/stats" element={<CourseStats />} />
                   <Route path="/teacher/course/:courseId/student/:studentId" element={<StudentDetails />} />
                   <Route path="/teacher/assignment/:id" element={<ReviewAssignment />} />
+                  <Route path="/teacher/groups" element={<Groups />} />
+                  <Route path="/teacher/group/:id" element={<GroupDetail />} />
+                  <Route path="/groups" element={<StudentGroups />} />
+                  <Route path="/group/:id" element={<StudentGroupDetail />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

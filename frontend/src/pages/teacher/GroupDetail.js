@@ -1,0 +1,484 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  Tabs,
+  Tab,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  CircularProgress,
+  Chip,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+} from '@mui/material';
+import {
+  Add,
+  Delete,
+  PersonAdd,
+  Book,
+  Assignment,
+  Chat,
+  BarChart,
+} from '@mui/icons-material';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
+import GroupChat from '../../components/GroupChat';
+import GradesTable from '../../components/GradesTable';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+
+const GroupDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [group, setGroup] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [tabValue, setTabValue] = useState(0);
+  const [addStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
+  const [assignCourseDialogOpen, setAssignCourseDialogOpen] = useState(false);
+  const [createHomeworkDialogOpen, setCreateHomeworkDialogOpen] = useState(false);
+  const [studentEmail, setStudentEmail] = useState('');
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [availableCourses, setAvailableCourses] = useState([]);
+  const [homeworkForm, setHomeworkForm] = useState({
+    title: '',
+    description: '',
+    dueDate: '',
+    maxScore: 100
+  });
+
+  useEffect(() => {
+    fetchGroupDetails();
+    if (tabValue === 3) {
+      fetchAvailableCourses();
+    }
+  }, [id, tabValue]);
+
+  const fetchGroupDetails = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/groups/${id}`);
+      setGroup(response.data);
+    } catch (error) {
+      setError('Не удалось загрузить данные группы');
+      console.error('Fetch group error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAvailableCourses = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/courses`);
+      setAvailableCourses(response.data.filter(c => c.teacherId === user?.id));
+    } catch (error) {
+      console.error('Fetch courses error:', error);
+    }
+  };
+
+  const handleAddStudent = async () => {
+    try {
+      await axios.post(`${API_URL}/groups/${id}/students`, { studentEmail });
+      setAddStudentDialogOpen(false);
+      setStudentEmail('');
+      fetchGroupDetails();
+    } catch (error) {
+      setError(error.response?.data?.error || 'Не удалось добавить студента');
+    }
+  };
+
+  const handleRemoveStudent = async (studentId) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этого студента из группы?')) {
+      return;
+    }
+    try {
+      await axios.delete(`${API_URL}/groups/${id}/students/${studentId}`);
+      fetchGroupDetails();
+    } catch (error) {
+      setError(error.response?.data?.error || 'Не удалось удалить студента');
+    }
+  };
+
+  const handleAssignCourse = async () => {
+    try {
+      await axios.post(`${API_URL}/groups/${id}/courses`, { courseId: selectedCourseId });
+      setAssignCourseDialogOpen(false);
+      setSelectedCourseId('');
+      fetchGroupDetails();
+    } catch (error) {
+      setError(error.response?.data?.error || 'Не удалось назначить курс');
+    }
+  };
+
+  const handleUnassignCourse = async (courseId) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этот курс из группы?')) {
+      return;
+    }
+    try {
+      await axios.delete(`${API_URL}/groups/${id}/courses/${courseId}`);
+      fetchGroupDetails();
+    } catch (error) {
+      setError(error.response?.data?.error || 'Не удалось удалить курс');
+    }
+  };
+
+  const handleCreateHomework = async () => {
+    try {
+      await axios.post(`${API_URL}/homeworks`, {
+        groupId: id,
+        ...homeworkForm,
+        dueDate: homeworkForm.dueDate || null
+      });
+      setCreateHomeworkDialogOpen(false);
+      setHomeworkForm({ title: '', description: '', dueDate: '', maxScore: 100 });
+      fetchGroupDetails();
+    } catch (error) {
+      setError(error.response?.data?.error || 'Не удалось создать домашнее задание');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!group) {
+    return <Alert severity="error">Группа не найдена</Alert>;
+  }
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography variant="h4">{group.name}</Typography>
+          {group.description && (
+            <Typography variant="body2" color="text.secondary">
+              {group.description}
+            </Typography>
+          )}
+        </Box>
+        <Button variant="outlined" onClick={() => navigate('/teacher/groups')}>
+          ← Назад
+        </Button>
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
+        <Tab icon={<PersonAdd />} label="Студенты" />
+        <Tab icon={<Book />} label="Курсы" />
+        <Tab icon={<Assignment />} label="Домашние задания" />
+        <Tab icon={<Chat />} label="Чат" />
+        <Tab icon={<BarChart />} label="Успеваемость" />
+        <Tab icon={<BarChart />} label="Статистика" />
+      </Tabs>
+
+      {tabValue === 0 && (
+        <Box>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="h6">Студенты ({group.members?.length || 0})</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setAddStudentDialogOpen(true)}
+            >
+              Добавить студента
+            </Button>
+          </Box>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Имя</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Дата добавления</TableCell>
+                  <TableCell align="right">Действия</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {group.members?.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell>
+                      {member.student.firstName} {member.student.lastName}
+                    </TableCell>
+                    <TableCell>{member.student.email}</TableCell>
+                    <TableCell>
+                      {new Date(member.joinedAt).toLocaleDateString('ru-RU')}
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleRemoveStudent(member.studentId)}
+                      >
+                        <Delete />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      )}
+
+      {tabValue === 1 && (
+        <Box>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="h6">Курсы ({group.courseAssignments?.length || 0})</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => {
+                setAssignCourseDialogOpen(true);
+                fetchAvailableCourses();
+              }}
+            >
+              Назначить курс
+            </Button>
+          </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+            {group.courseAssignments?.map((assignment) => (
+              <Card key={assignment.id}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                    <Box>
+                      <Typography variant="h6">{assignment.course.title}</Typography>
+                      {assignment.course.description && (
+                        <Typography variant="body2" color="text.secondary">
+                          {assignment.course.description}
+                        </Typography>
+                      )}
+                    </Box>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleUnassignCourse(assignment.courseId)}
+                    >
+                      <Delete />
+                    </IconButton>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {tabValue === 2 && (
+        <Box>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="h6">Домашние задания ({group.homeworks?.length || 0})</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setCreateHomeworkDialogOpen(true)}
+            >
+              Создать ДЗ
+            </Button>
+          </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+            {group.homeworks?.map((homework) => (
+              <Card key={homework.id}>
+                <CardContent>
+                  <Typography variant="h6">{homework.title}</Typography>
+                  {homework.description && (
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      {homework.description}
+                    </Typography>
+                  )}
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                    {homework.dueDate && (
+                      <Chip
+                        label={`Срок: ${new Date(homework.dueDate).toLocaleDateString('ru-RU')}`}
+                        size="small"
+                      />
+                    )}
+                    <Chip
+                      label={`Отправок: ${homework._count?.submissions || 0}`}
+                      size="small"
+                      color="primary"
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {tabValue === 3 && (
+        <Box>
+          <GroupChat groupId={id} user={user} />
+        </Box>
+      )}
+
+      {tabValue === 4 && (
+        <Box>
+          <Typography variant="h6" sx={{ mb: 2 }}>Успеваемость группы</Typography>
+          <GradesTable groupId={id} isTeacher={true} />
+        </Box>
+      )}
+
+      {tabValue === 5 && (
+        <Box>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              try {
+                const response = await axios.get(`${API_URL}/groups/${id}/stats`);
+                console.log('Group stats:', response.data);
+                // Здесь можно отобразить статистику
+                alert('Статистика загружена. Проверьте консоль.');
+              } catch (error) {
+                setError('Не удалось загрузить статистику');
+              }
+            }}
+          >
+            Загрузить статистику
+          </Button>
+        </Box>
+      )}
+
+      {/* Add Student Dialog */}
+      <Dialog open={addStudentDialogOpen} onClose={() => setAddStudentDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Добавить студента</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Email студента"
+            value={studentEmail}
+            onChange={(e) => setStudentEmail(e.target.value)}
+            margin="normal"
+            type="email"
+            required
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddStudentDialogOpen(false)}>Отмена</Button>
+          <Button
+            onClick={handleAddStudent}
+            variant="contained"
+            disabled={!studentEmail.trim()}
+          >
+            Добавить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Assign Course Dialog */}
+      <Dialog open={assignCourseDialogOpen} onClose={() => setAssignCourseDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Назначить курс</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            {availableCourses.map((course) => (
+              <Card
+                key={course.id}
+                sx={{
+                  mb: 1,
+                  cursor: 'pointer',
+                  bgcolor: selectedCourseId === course.id ? 'action.selected' : 'background.paper'
+                }}
+                onClick={() => setSelectedCourseId(course.id)}
+              >
+                <CardContent>
+                  <Typography variant="h6">{course.title}</Typography>
+                  {course.description && (
+                    <Typography variant="body2" color="text.secondary">
+                      {course.description}
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssignCourseDialogOpen(false)}>Отмена</Button>
+          <Button
+            onClick={handleAssignCourse}
+            variant="contained"
+            disabled={!selectedCourseId}
+          >
+            Назначить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create Homework Dialog */}
+      <Dialog open={createHomeworkDialogOpen} onClose={() => setCreateHomeworkDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Создать домашнее задание</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Название"
+            value={homeworkForm.title}
+            onChange={(e) => setHomeworkForm({ ...homeworkForm, title: e.target.value })}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Описание"
+            value={homeworkForm.description}
+            onChange={(e) => setHomeworkForm({ ...homeworkForm, description: e.target.value })}
+            margin="normal"
+            multiline
+            rows={3}
+          />
+          <TextField
+            fullWidth
+            type="datetime-local"
+            label="Срок сдачи"
+            value={homeworkForm.dueDate}
+            onChange={(e) => setHomeworkForm({ ...homeworkForm, dueDate: e.target.value })}
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label="Максимальный балл"
+            value={homeworkForm.maxScore}
+            onChange={(e) => setHomeworkForm({ ...homeworkForm, maxScore: parseInt(e.target.value) || 100 })}
+            margin="normal"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateHomeworkDialogOpen(false)}>Отмена</Button>
+          <Button
+            onClick={handleCreateHomework}
+            variant="contained"
+            disabled={!homeworkForm.title.trim()}
+          >
+            Создать
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default GroupDetail;
+

@@ -183,6 +183,57 @@ class ChatController {
       res.status(500).json({ error: 'Failed to delete message' });
     }
   }
+
+  /**
+   * Получить темы группы
+   * @route GET /api/chat/group/:groupId/topics
+   * @param {object} req - Express request
+   * @param {object} res - Express response
+   */
+  async getGroupTopics(req, res) {
+    try {
+      const { groupId } = req.params;
+      const topics = await chatService.getGroupTopics(groupId, req.user.id, req.user.role);
+      res.json(topics);
+    } catch (error) {
+      console.error('Get group topics error:', error);
+      if (error.message === 'Access denied') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to fetch topics' });
+    }
+  }
+
+  /**
+   * Создать тему для группы
+   * @route POST /api/chat/group/:groupId/topics
+   * @param {object} req - Express request
+   * @param {object} res - Express response
+   */
+  async createGroupTopic(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { groupId } = req.params;
+      const { title, description } = req.body;
+
+      const topic = await chatService.createGroupTopic(groupId, req.user.id, req.user.role, {
+        title,
+        description
+      });
+
+      res.status(201).json(topic);
+    } catch (error) {
+      console.error('Create group topic error:', error);
+      if (error.message === 'Access denied') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to create topic' });
+    }
+  }
 }
 
 module.exports = new ChatController();

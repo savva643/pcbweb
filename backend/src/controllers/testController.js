@@ -157,6 +157,30 @@ class TestController {
       res.status(500).json({ error: 'Failed to fetch attempt' });
     }
   }
+
+  /**
+   * Закрыть/открыть тест
+   * @route PUT /api/tests/:id/active
+   */
+  async setTestActive(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { id } = req.params;
+      const { isActive, closedAt } = req.body;
+      const test = await testService.setTestActive(id, req.user.id, isActive, closedAt ? new Date(closedAt) : null);
+      res.json(test);
+    } catch (error) {
+      console.error('Set test active error:', error);
+      if (error.message === 'Access denied' || error.message === 'Test not found') {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to update test' });
+    }
+  }
 }
 
 module.exports = new TestController();

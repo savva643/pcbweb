@@ -77,7 +77,7 @@ class ChatRepository extends BaseRepository {
    * @returns {Promise<Array>}
    */
   async findTopicsByCourse(courseId, includePrivate = false) {
-    const where = { courseId };
+    const where = { courseId, groupId: null };
     if (!includePrivate) {
       where.isPrivate = false;
       where.participantId = null; // Исключаем личные чаты
@@ -88,6 +88,29 @@ class ChatRepository extends BaseRepository {
 
     return prisma.chatTopic.findMany({
       where,
+      include: {
+        _count: {
+          select: {
+            messages: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  /**
+   * Получить все темы группы
+   * @param {string} groupId - ID группы
+   * @returns {Promise<Array>}
+   */
+  async findTopicsByGroup(groupId) {
+    return prisma.chatTopic.findMany({
+      where: {
+        groupId,
+        isPrivate: false,
+        participantId: null
+      },
       include: {
         _count: {
           select: {

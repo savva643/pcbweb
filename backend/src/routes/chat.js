@@ -258,5 +258,27 @@ router.put('/messages/:id', authenticate, chatValidators.updateMessage, chatCont
  */
 router.delete('/messages/:id', authenticate, chatController.deleteMessage.bind(chatController));
 
+/**
+ * @swagger
+ * /api/chat/group/{groupId}/topics:
+ *   get:
+ *     summary: Получить темы обсуждения группы
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/group/:groupId/topics', authenticate, chatController.getGroupTopics.bind(chatController));
+
+/**
+ * @swagger
+ * /api/chat/group/{groupId}/topics:
+ *   post:
+ *     summary: Создать новую тему обсуждения для группы
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/group/:groupId/topics', authenticate, chatValidators.createTopic, chatController.createGroupTopic.bind(chatController));
+
 module.exports = router;
 

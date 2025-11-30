@@ -229,4 +229,6 @@ router.post('/:id/submit', authenticate, requireRole('STUDENT'), testValidators.
  */
 router.get('/:id/attempts/:attemptId', authenticate, testValidators.testId, testValidators.attemptId, testController.getAttemptResults);
 
+router.put('/:id/active', authenticate, requireRole('TEACHER'), testValidators.testId, testController.setTestActive);
+
 module.exports = router;

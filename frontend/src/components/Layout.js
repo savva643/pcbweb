@@ -24,6 +24,7 @@ import {
   Person,
   Logout,
   School,
+  Groups as GroupsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -57,11 +58,13 @@ const Layout = ({ children }) => {
   const menuItems = user?.role === 'TEACHER' 
     ? [
         { text: 'Панель преподавателя', icon: <School />, path: '/teacher' },
+        { text: 'Группы', icon: <GroupsIcon />, path: '/teacher/groups' },
       ]
     : [
         { text: 'Главная', icon: <Dashboard />, path: '/' },
         { text: 'Мои курсы', icon: <Book />, path: '/my-courses' },
         { text: 'Мои задания', icon: <Assignment />, path: '/submissions' },
+        { text: 'Группы', icon: <GroupsIcon />, path: '/groups' },
       ];
 
   const drawer = (
