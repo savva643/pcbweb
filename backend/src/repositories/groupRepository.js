@@ -72,14 +72,21 @@ class GroupRepository extends BaseRepository {
               select: {
                 id: true,
                 title: true,
-                description: true
-              },
-              include: {
+                description: true,
                 tests: {
                   where: {
                     isActive: true
                   },
-                  include: {
+                  select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    maxScore: true,
+                    timeLimit: true,
+                    isActive: true,
+                    closedAt: true,
+                    difficulty: true,
+                    autoGrade: true,
                     _count: {
                       select: {
                         questions: true,

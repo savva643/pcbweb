@@ -21,6 +21,7 @@ import {
   Description,
   CheckCircle,
   RadioButtonUnchecked,
+  Image as ImageIcon,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
