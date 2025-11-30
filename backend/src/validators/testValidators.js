@@ -85,7 +85,7 @@ const testValidators = {
       .withMessage('isCorrect must be a boolean'),
     body('answers.*.matchKey')
       .optional()
-      .trim()
+      .isString()
       .withMessage('Match key must be a string'),
     body('order')
       .optional()
