@@ -54,6 +54,7 @@ model User {
   groupsAsTeacher     Group[]
   groupMemberships    GroupMember[]
   homeworkSubmissions HomeworkSubmission[]
+  homeworkGrades      HomeworkGrade[]
   gradeRecords        StudentGradeRecord[]
 
   @@map("users")
