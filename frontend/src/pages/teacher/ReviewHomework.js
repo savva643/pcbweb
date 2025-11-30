@@ -28,11 +28,11 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-const ReviewAssignment = () => {
+const ReviewHomework = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [assignment, setAssignment] = useState(null);
+  const [homework, setHomework] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,11 +46,9 @@ const ReviewAssignment = () => {
 
   const fetchData = React.useCallback(async () => {
     try {
-      const assignmentRes = await axios.get(`${API_URL}/assignments/${id}`);
-      setAssignment(assignmentRes.data);
-
-      const submissionsRes = await axios.get(`${API_URL}/submissions?assignmentId=${id}`);
-      setSubmissions(submissionsRes.data);
+      const response = await axios.get(`${API_URL}/homeworks/${id}`);
+      setHomework(response.data);
+      setSubmissions(response.data.submissions || []);
     } catch (error) {
       setError('Не удалось загрузить данные');
       console.error('Fetch error:', error);
@@ -65,9 +63,9 @@ const ReviewAssignment = () => {
 
   const handleGrade = async (submissionId) => {
     try {
-      await axios.post(`${API_URL}/submissions/${submissionId}/grade`, {
+      await axios.post(`${API_URL}/homeworks/submissions/${submissionId}/grade`, {
         score: gradeForm.score,
-        maxScore: assignment.maxScore,
+        maxScore: homework.maxScore,
         feedback: gradeForm.feedback,
       });
 
@@ -83,7 +81,7 @@ const ReviewAssignment = () => {
     if (!commentText.trim()) return;
 
     try {
-      await axios.post(`${API_URL}/submissions/${submissionId}/comments`, {
+      await axios.post(`${API_URL}/homeworks/submissions/${submissionId}/comments`, {
         content: commentText,
       });
 
@@ -91,6 +89,32 @@ const ReviewAssignment = () => {
       fetchData();
     } catch (error) {
       setError('Не удалось добавить комментарий');
+    }
+  };
+
+  const getDifficultyLabel = (difficulty) => {
+    switch (difficulty) {
+      case 'LOW':
+        return 'Низкая';
+      case 'MEDIUM':
+        return 'Средняя';
+      case 'HIGH':
+        return 'Высокая';
+      default:
+        return difficulty;
+    }
+  };
+
+  const getDifficultyColor = (difficulty) => {
+    switch (difficulty) {
+      case 'LOW':
+        return 'success';
+      case 'MEDIUM':
+        return 'warning';
+      case 'HIGH':
+        return 'error';
+      default:
+        return 'default';
     }
   };
 
@@ -102,8 +126,8 @@ const ReviewAssignment = () => {
     );
   }
 
-  if (!assignment) {
-    return <Alert severity="error">Задание не найдено</Alert>;
+  if (!homework) {
+    return <Alert severity="error">Домашнее задание не найдено</Alert>;
   }
 
   return (
@@ -112,7 +136,7 @@ const ReviewAssignment = () => {
         <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)}>
           Назад
         </Button>
-        <Typography variant="h4">{assignment.title}</Typography>
+        <Typography variant="h4">{homework.title}</Typography>
       </Box>
 
       {error && (
@@ -123,18 +147,59 @@ const ReviewAssignment = () => {
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="body1" paragraph>
-            {assignment.description || 'Нет описания'}
-          </Typography>
-          {assignment.dueDate && (
-            <Chip
-              label={`Срок сдачи: ${new Date(assignment.dueDate).toLocaleDateString('ru-RU')}`}
-              color="primary"
-            />
+          {homework.description && (
+            <Typography variant="body1" paragraph>
+              {homework.description}
+            </Typography>
           )}
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Максимальный балл: {assignment.maxScore}
-          </Typography>
+          {homework.instructions && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Инструкции:
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {homework.instructions}
+              </Typography>
+            </Box>
+          )}
+          {homework.requirements && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Требования:
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {homework.requirements}
+              </Typography>
+            </Box>
+          )}
+          {homework.resources && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Ресурсы:
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {homework.resources}
+              </Typography>
+            </Box>
+          )}
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}>
+            {homework.dueDate && (
+              <Chip
+                label={`Срок сдачи: ${new Date(homework.dueDate).toLocaleDateString('ru-RU')}`}
+                color="primary"
+              />
+            )}
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Максимальный балл: {homework.maxScore}
+            </Typography>
+            {homework.difficulty && (
+              <Chip
+                label={`Сложность: ${getDifficultyLabel(homework.difficulty)}`}
+                size="small"
+                color={getDifficultyColor(homework.difficulty)}
+              />
+            )}
+          </Box>
         </CardContent>
       </Card>
 
@@ -229,7 +294,7 @@ const ReviewAssignment = () => {
                                   const newContent = window.prompt('Изменить комментарий:', comment.content);
                                   if (newContent && newContent.trim() && newContent !== comment.content) {
                                     try {
-                                      await axios.put(`${API_URL}/submissions/${submission.id}/comments/${comment.id}`, {
+                                      await axios.put(`${API_URL}/homeworks/submissions/${submission.id}/comments/${comment.id}`, {
                                         content: newContent.trim(),
                                       });
                                       fetchData();
@@ -290,8 +355,8 @@ const ReviewAssignment = () => {
             value={gradeForm.score}
             onChange={(e) => setGradeForm({ ...gradeForm, score: parseInt(e.target.value) || 0 })}
             margin="normal"
-            inputProps={{ min: 0, max: assignment.maxScore }}
-            helperText={`Максимум: ${assignment.maxScore} баллов`}
+            inputProps={{ min: 0, max: homework.maxScore }}
+            helperText={`Максимум: ${homework.maxScore} баллов`}
           />
           <TextField
             fullWidth
@@ -309,9 +374,9 @@ const ReviewAssignment = () => {
           <Button
             onClick={() => handleGrade(selectedSubmission?.id)}
             variant="contained"
-            disabled={gradeForm.score < 0 || gradeForm.score > assignment.maxScore}
+            disabled={gradeForm.score < 0 || gradeForm.score > homework.maxScore}
           >
-            Выставить оценку
+            {selectedSubmission?.grade ? 'Изменить оценку' : 'Выставить оценку'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -319,5 +384,5 @@ const ReviewAssignment = () => {
   );
 };
 
-export default ReviewAssignment;
+export default ReviewHomework;
 

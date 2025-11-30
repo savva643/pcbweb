@@ -30,6 +30,15 @@ const homeworkValidators = {
     body('score').isInt({ min: 0 }).withMessage('Score must be a non-negative integer'),
     body('maxScore').isInt({ min: 1 }).withMessage('Max score must be a positive integer'),
     body('feedback').optional().trim()
+  ],
+  addComment: [
+    param('id').isUUID().withMessage('Invalid submission ID'),
+    body('content').trim().notEmpty().withMessage('Comment content is required')
+  ],
+  updateComment: [
+    param('submissionId').isUUID().withMessage('Invalid submission ID'),
+    param('commentId').isUUID().withMessage('Invalid comment ID'),
+    body('content').trim().notEmpty().withMessage('Comment content is required')
   ]
 };
 

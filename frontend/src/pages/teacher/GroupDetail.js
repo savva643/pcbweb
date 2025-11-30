@@ -68,7 +68,11 @@ const GroupDetail = () => {
     title: '',
     description: '',
     dueDate: '',
-    maxScore: 100
+    maxScore: 100,
+    difficulty: 'MEDIUM',
+    instructions: '',
+    requirements: '',
+    resources: ''
   });
   const [gradesView, setGradesView] = useState('monthly'); // 'monthly', 'course', 'homework', 'test'
   const [selectedRelatedId, setSelectedRelatedId] = useState(null);
@@ -153,11 +157,17 @@ const GroupDetail = () => {
     try {
       await axios.post(`${API_URL}/homeworks`, {
         groupId: id,
-        ...homeworkForm,
-        dueDate: homeworkForm.dueDate || null
+        title: homeworkForm.title,
+        description: homeworkForm.description,
+        instructions: homeworkForm.instructions || null,
+        requirements: homeworkForm.requirements || null,
+        resources: homeworkForm.resources || null,
+        dueDate: homeworkForm.dueDate || null,
+        maxScore: homeworkForm.maxScore,
+        difficulty: homeworkForm.difficulty
       });
       setCreateHomeworkDialogOpen(false);
-      setHomeworkForm({ title: '', description: '', dueDate: '', maxScore: 100 });
+      setHomeworkForm({ title: '', description: '', dueDate: '', maxScore: 100, difficulty: 'MEDIUM', instructions: '', requirements: '', resources: '' });
       fetchGroupDetails();
     } catch (error) {
       setError(error.response?.data?.error || 'Не удалось создать домашнее задание');
@@ -221,13 +231,37 @@ const GroupDetail = () => {
       >
         <Tab icon={<PersonAdd />} label="Студенты" iconPosition="start" />
         <Tab icon={<Book />} label="Курсы" iconPosition="start" />
-        <Tab icon={<Assignment />} label="ДЗ" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
-        <Tab icon={<Assignment />} label="ДЗ" iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
+        <Tab 
+          icon={<Assignment />} 
+          label="ДЗ" 
+          iconPosition="start"
+          sx={{ 
+            '& .MuiTab-iconWrapper': { 
+              display: { xs: 'none', md: 'flex' } 
+            }
+          }}
+        />
         <Tab icon={<Chat />} label="Чат" iconPosition="start" />
-        <Tab icon={<BarChart />} label="Успеваемость" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
-        <Tab icon={<BarChart />} label="Успев." iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
-        <Tab icon={<BarChart />} label="Статистика" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
-        <Tab icon={<BarChart />} label="Стат." iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
+        <Tab 
+          icon={<BarChart />} 
+          label="Успеваемость" 
+          iconPosition="start"
+          sx={{ 
+            '& .MuiTab-iconWrapper': { 
+              display: { xs: 'none', md: 'flex' } 
+            }
+          }}
+        />
+        <Tab 
+          icon={<BarChart />} 
+          label="Статистика" 
+          iconPosition="start"
+          sx={{ 
+            '& .MuiTab-iconWrapper': { 
+              display: { xs: 'none', md: 'flex' } 
+            }
+          }}
+        />
       </Tabs>
 
       {tabValue === 0 && (
@@ -363,7 +397,11 @@ const GroupDetail = () => {
             gap: 2 
           }}>
             {group.homeworks?.map((homework) => (
-              <Card key={homework.id}>
+              <Card 
+                key={homework.id}
+                sx={{ cursor: 'pointer' }}
+                onClick={() => navigate(`/teacher/homework/${homework.id}`)}
+              >
                 <CardContent>
                   <Typography variant="h6">{homework.title}</Typography>
                   {homework.description && (
@@ -371,7 +409,7 @@ const GroupDetail = () => {
                       {homework.description}
                     </Typography>
                   )}
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                     {homework.dueDate && (
                       <Chip
                         label={`Срок: ${new Date(homework.dueDate).toLocaleDateString('ru-RU')}`}
@@ -383,6 +421,13 @@ const GroupDetail = () => {
                       size="small"
                       color="primary"
                     />
+                    {homework.difficulty && (
+                      <Chip
+                        label={`Сложность: ${homework.difficulty === 'LOW' ? 'Низкая' : homework.difficulty === 'MEDIUM' ? 'Средняя' : 'Высокая'}`}
+                        size="small"
+                        color={homework.difficulty === 'LOW' ? 'success' : homework.difficulty === 'MEDIUM' ? 'warning' : 'error'}
+                      />
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -548,7 +593,7 @@ const GroupDetail = () => {
       </Dialog>
 
       {/* Create Homework Dialog */}
-      <Dialog open={createHomeworkDialogOpen} onClose={() => setCreateHomeworkDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={createHomeworkDialogOpen} onClose={() => setCreateHomeworkDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Создать домашнее задание</DialogTitle>
         <DialogContent>
           <TextField
@@ -567,27 +612,75 @@ const GroupDetail = () => {
             margin="normal"
             multiline
             rows={3}
+            placeholder="Краткое описание задания"
           />
           <TextField
             fullWidth
-            type="datetime-local"
-            label="Срок сдачи"
-            value={homeworkForm.dueDate}
-            onChange={(e) => setHomeworkForm({ ...homeworkForm, dueDate: e.target.value })}
+            label="Инструкции по выполнению"
+            value={homeworkForm.instructions}
+            onChange={(e) => setHomeworkForm({ ...homeworkForm, instructions: e.target.value })}
             margin="normal"
-            InputLabelProps={{ shrink: true }}
+            multiline
+            rows={4}
+            placeholder="Подробные инструкции, что нужно сделать..."
           />
           <TextField
             fullWidth
-            type="number"
-            label="Максимальный балл"
-            value={homeworkForm.maxScore}
-            onChange={(e) => setHomeworkForm({ ...homeworkForm, maxScore: parseInt(e.target.value) || 100 })}
+            label="Требования"
+            value={homeworkForm.requirements}
+            onChange={(e) => setHomeworkForm({ ...homeworkForm, requirements: e.target.value })}
             margin="normal"
+            multiline
+            rows={3}
+            placeholder="Требования к выполнению (формат, объем и т.д.)"
           />
+          <TextField
+            fullWidth
+            label="Ресурсы и материалы"
+            value={homeworkForm.resources}
+            onChange={(e) => setHomeworkForm({ ...homeworkForm, resources: e.target.value })}
+            margin="normal"
+            multiline
+            rows={2}
+            placeholder="Ссылки на материалы, книги, статьи и т.д."
+          />
+          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <TextField
+              type="datetime-local"
+              label="Срок сдачи"
+              value={homeworkForm.dueDate}
+              onChange={(e) => setHomeworkForm({ ...homeworkForm, dueDate: e.target.value })}
+              margin="normal"
+              InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              type="number"
+              label="Максимальный балл"
+              value={homeworkForm.maxScore}
+              onChange={(e) => setHomeworkForm({ ...homeworkForm, maxScore: parseInt(e.target.value) || 100 })}
+              margin="normal"
+              sx={{ width: 200 }}
+            />
+            <FormControl margin="normal" sx={{ width: 200 }}>
+              <InputLabel>Сложность</InputLabel>
+              <Select
+                value={homeworkForm.difficulty}
+                label="Сложность"
+                onChange={(e) => setHomeworkForm({ ...homeworkForm, difficulty: e.target.value })}
+              >
+                <MenuItem value="LOW">Низкая</MenuItem>
+                <MenuItem value="MEDIUM">Средняя</MenuItem>
+                <MenuItem value="HIGH">Высокая</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateHomeworkDialogOpen(false)}>Отмена</Button>
+          <Button onClick={() => {
+            setCreateHomeworkDialogOpen(false);
+            setHomeworkForm({ title: '', description: '', dueDate: '', maxScore: 100, difficulty: 'MEDIUM', instructions: '', requirements: '', resources: '' });
+          }}>Отмена</Button>
           <Button
             onClick={handleCreateHomework}
             variant="contained"

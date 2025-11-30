@@ -162,6 +162,24 @@ class SubmissionController {
       res.status(500).json({ error: 'Failed to add comment' });
     }
   }
+
+  /**
+   * Обновить комментарий
+   * @route PUT /api/submissions/:submissionId/comments/:commentId
+   */
+  async updateComment(req, res) {
+    try {
+      const { submissionId, commentId } = req.params;
+      const comment = await submissionService.updateComment(submissionId, commentId, req.user.id, req.body.content);
+      res.json(comment);
+    } catch (error) {
+      console.error('Update comment error:', error);
+      if (error.message === 'Comment not found' || error.message === 'Access denied') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to update comment' });
+    }
+  }
 }
 
 module.exports = new SubmissionController();

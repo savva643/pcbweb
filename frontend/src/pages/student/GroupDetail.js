@@ -109,11 +109,28 @@ const StudentGroupDetail = () => {
         allowScrollButtonsMobile
       >
         <Tab icon={<Book />} label="Курсы" iconPosition="start" />
-        <Tab icon={<Assignment />} label="ДЗ" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
-        <Tab icon={<Assignment />} label="ДЗ" iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
+        <Tab 
+          icon={<Assignment />} 
+          label="ДЗ" 
+          iconPosition="start"
+          sx={{ 
+            '& .MuiTab-iconWrapper': { 
+              display: { xs: 'none', md: 'flex' } 
+            }
+          }}
+        />
+        <Tab icon={<Assignment />} label="Тесты" iconPosition="start" />
         <Tab icon={<Chat />} label="Чат" iconPosition="start" />
-        <Tab icon={<BarChart />} label="Успеваемость" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
-        <Tab icon={<BarChart />} label="Успев." iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
+        <Tab 
+          icon={<BarChart />} 
+          label="Успеваемость" 
+          iconPosition="start"
+          sx={{ 
+            '& .MuiTab-iconWrapper': { 
+              display: { xs: 'none', md: 'flex' } 
+            }
+          }}
+        />
       </Tabs>
 
       {tabValue === 0 && (
@@ -189,6 +206,13 @@ const StudentGroupDetail = () => {
                       size="small"
                       color="primary"
                     />
+                    {homework.difficulty && (
+                      <Chip
+                        label={`Сложность: ${homework.difficulty === 'LOW' ? 'Низкая' : homework.difficulty === 'MEDIUM' ? 'Средняя' : 'Высокая'}`}
+                        size="small"
+                        color={homework.difficulty === 'LOW' ? 'success' : homework.difficulty === 'MEDIUM' ? 'warning' : 'error'}
+                      />
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -199,11 +223,75 @@ const StudentGroupDetail = () => {
 
       {tabValue === 2 && (
         <Box>
-          <GroupChat groupId={id} user={user} />
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Тесты
+          </Typography>
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(auto-fill, minmax(250px, 1fr))',
+              md: 'repeat(auto-fill, minmax(300px, 1fr))' 
+            }, 
+            gap: 2 
+          }}>
+            {group.courseAssignments?.flatMap(assignment => 
+              assignment.course.tests?.map(test => (
+                <Card
+                  key={test.id}
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    if (test.myAttempt?.completedAt) {
+                      // Если тест уже пройден, показываем результаты
+                      navigate(`/test/${test.id}/result/${test.myAttempt.id}`);
+                    } else {
+                      // Иначе начинаем/продолжаем тест
+                      navigate(`/test/${test.id}`);
+                    }
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h6">{test.title}</Typography>
+                    {test.description && (
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {test.description}
+                      </Typography>
+                    )}
+                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                      <Chip
+                        label={`Вопросов: ${test._count?.questions || 0}`}
+                        size="small"
+                      />
+                      <Chip
+                        label={`Макс. балл: ${test.maxScore}`}
+                        size="small"
+                        color="primary"
+                      />
+                      {test.timeLimit && (
+                        <Chip
+                          label={`Время: ${test.timeLimit} мин`}
+                          size="small"
+                        />
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+            {(!group.courseAssignments || group.courseAssignments.flatMap(a => a.course.tests || []).length === 0) && (
+              <Alert severity="info">Тесты пока не добавлены</Alert>
+            )}
+          </Box>
         </Box>
       )}
 
       {tabValue === 3 && (
+        <Box>
+          <GroupChat groupId={id} user={user} />
+        </Box>
+      )}
+
+      {tabValue === 4 && (
         <Box>
           <Typography variant="h6" sx={{ mb: 2 }}>Моя успеваемость</Typography>
           <GradesTable groupId={id} studentId={user?.id} isTeacher={false} />

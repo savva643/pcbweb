@@ -66,7 +66,8 @@ class MaterialService {
       description: data.description,
       type: data.type,
       contentUrl: data.contentUrl,
-      order: data.order ? parseInt(data.order) : 0
+      order: data.order ? parseInt(data.order) : 0,
+      assignmentId: data.assignmentId || null
     });
 
     // Создать начальную версию
@@ -109,6 +110,7 @@ class MaterialService {
     if (data.type !== undefined) updateData.type = data.type;
     if (data.order !== undefined) updateData.order = parseInt(data.order);
     if (data.contentUrl !== undefined) updateData.contentUrl = data.contentUrl;
+    if (data.assignmentId !== undefined) updateData.assignmentId = data.assignmentId || null;
 
     const updatedMaterial = await materialRepository.update(materialId, updateData);
 

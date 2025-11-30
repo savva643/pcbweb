@@ -79,10 +79,12 @@ class CourseService {
    */
   async createCourse(teacherId, data) {
     return courseRepository.create({
-      ...data,
+      title: data.title,
+      description: data.description,
       teacherId,
       isPrivate: data.isPrivate || false,
-      allowedEmails: data.isPrivate ? data.allowedEmails : null
+      allowedEmails: data.isPrivate ? data.allowedEmails : null,
+      difficulty: data.difficulty || 'MEDIUM'
     }, {
       teacher: {
         select: {

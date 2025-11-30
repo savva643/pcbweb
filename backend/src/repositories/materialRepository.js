@@ -19,6 +19,15 @@ class MaterialRepository extends BaseRepository {
   async findByCourse(courseId) {
     return prisma.material.findMany({
       where: { courseId },
+      include: {
+        assignment: {
+          select: {
+            id: true,
+            title: true,
+            description: true
+          }
+        }
+      },
       orderBy: { order: 'asc' }
     });
   }

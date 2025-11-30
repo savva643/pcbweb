@@ -115,7 +115,8 @@ class AssignmentService {
       title: data.title,
       description: data.description,
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
-      maxScore: data.maxScore ? parseInt(data.maxScore) : 100
+      maxScore: data.maxScore ? parseInt(data.maxScore) : 100,
+      difficulty: data.difficulty || 'MEDIUM'
     });
   }
 }

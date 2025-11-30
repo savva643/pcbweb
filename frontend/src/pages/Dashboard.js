@@ -27,6 +27,11 @@ const Dashboard = () => {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (user?.role === 'TEACHER') {
+      // Для преподавателей сразу перенаправляем на /teacher
+      navigate('/teacher', { replace: true });
+      return;
+    }
     if (user?.role === 'STUDENT') {
       // Для студентов показываем доступные курсы для записи
       fetchAvailableCourses();
@@ -34,7 +39,7 @@ const Dashboard = () => {
       // Для преподавателей показываем их курсы
       fetchCourses();
     }
-  }, [user?.role]);
+  }, [user?.role, navigate]);
 
   const fetchAvailableCourses = async () => {
     try {
@@ -160,6 +165,13 @@ const Dashboard = () => {
                     label={`${course._count?.assignments || 0} заданий`}
                     size="small"
                   />
+                  {course.difficulty && (
+                    <Chip
+                      label={`Сложность: ${course.difficulty === 'LOW' ? 'Низкая' : course.difficulty === 'MEDIUM' ? 'Средняя' : 'Высокая'}`}
+                      size="small"
+                      color={course.difficulty === 'LOW' ? 'success' : course.difficulty === 'MEDIUM' ? 'warning' : 'error'}
+                    />
+                  )}
                   {user?.role === 'TEACHER' && (
                     <Chip
                       icon={<People />}

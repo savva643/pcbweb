@@ -104,6 +104,59 @@ const testValidators = {
       .withMessage('Attempt ID is required')
       .isUUID()
       .withMessage('Invalid attempt ID format')
+  ],
+
+  commentId: [
+    param('commentId')
+      .notEmpty()
+      .withMessage('Comment ID is required')
+      .isUUID()
+      .withMessage('Invalid comment ID format')
+  ],
+
+  gradeAttempt: [
+    param('attemptId')
+      .notEmpty()
+      .withMessage('Attempt ID is required')
+      .isUUID()
+      .withMessage('Invalid attempt ID format'),
+    body('score')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Score must be a non-negative integer'),
+    body('feedback')
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage('Feedback must not exceed 1000 characters')
+  ],
+
+  addComment: [
+    param('attemptId')
+      .notEmpty()
+      .withMessage('Attempt ID is required')
+      .isUUID()
+      .withMessage('Invalid attempt ID format'),
+    body('content')
+      .trim()
+      .notEmpty()
+      .withMessage('Comment content is required')
+      .isLength({ max: 1000 })
+      .withMessage('Comment must not exceed 1000 characters')
+  ],
+
+  updateComment: [
+    param('commentId')
+      .notEmpty()
+      .withMessage('Comment ID is required')
+      .isUUID()
+      .withMessage('Invalid comment ID format'),
+    body('content')
+      .trim()
+      .notEmpty()
+      .withMessage('Comment content is required')
+      .isLength({ max: 1000 })
+      .withMessage('Comment must not exceed 1000 characters')
   ]
 };
 

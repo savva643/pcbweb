@@ -20,6 +20,11 @@ import Groups from './pages/teacher/Groups';
 import GroupDetail from './pages/teacher/GroupDetail';
 import StudentGroups from './pages/student/Groups';
 import StudentGroupDetail from './pages/student/GroupDetail';
+import CreateTest from './pages/teacher/CreateTest';
+import TakeTest from './pages/student/TakeTest';
+import HomeworkDetail from './pages/student/HomeworkDetail';
+import ReviewHomework from './pages/teacher/ReviewHomework';
+import ReviewTest from './pages/teacher/ReviewTest';
 import Profile from './pages/Profile';
 
 function App() {
@@ -37,11 +42,16 @@ function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/course/:id" element={<CourseDetail />} />
                   <Route path="/assignment/:id" element={<AssignmentDetail />} />
+                  <Route path="/test/:id" element={<TakeTest />} />
+                  <Route path="/homework/:id" element={<HomeworkDetail />} />
+                  <Route path="/teacher/homework/:id" element={<ReviewHomework />} />
+                  <Route path="/teacher/test/:id" element={<ReviewTest />} />
                   <Route path="/my-courses" element={<MyCourses />} />
                   <Route path="/submissions" element={<MySubmissions />} />
                   <Route path="/teacher" element={<TeacherDashboard />} />
                   <Route path="/teacher/create-course" element={<CreateCourse />} />
                   <Route path="/teacher/course/:id" element={<ManageCourse />} />
+                  <Route path="/teacher/course/:courseId/create-test" element={<CreateTest />} />
                   <Route path="/teacher/course/:id/stats" element={<CourseStats />} />
                   <Route path="/teacher/course/:courseId/student/:studentId" element={<StudentDetails />} />
                   <Route path="/teacher/assignment/:id" element={<ReviewAssignment />} />

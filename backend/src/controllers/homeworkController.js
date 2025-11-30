@@ -49,34 +49,17 @@ class HomeworkController {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { groupId, title, description, dueDate, maxScore } = req.body;
-      
-      // Нормализуем дату перед передачей в сервис
-      let normalizedDueDate = null;
-      if (dueDate) {
-        // Если дата в формате datetime-local (YYYY-MM-DDTHH:mm), добавляем секунды
-        if (dueDate.includes('T') && !dueDate.includes('Z') && !dueDate.includes('+')) {
-          const parts = dueDate.split('T');
-          if (parts.length === 2) {
-            const timePart = parts[1];
-            if (timePart.split(':').length === 2) {
-              normalizedDueDate = dueDate + ':00';
-            } else {
-              normalizedDueDate = dueDate;
-            }
-          } else {
-            normalizedDueDate = dueDate;
-          }
-        } else {
-          normalizedDueDate = dueDate;
-        }
-      }
+      const { groupId, title, description, instructions, requirements, resources, dueDate, maxScore, difficulty } = req.body;
       
       const homework = await homeworkService.createHomework(groupId, req.user.id, {
         title,
         description,
-        dueDate: normalizedDueDate,
-        maxScore: maxScore || 100
+        instructions,
+        requirements,
+        resources,
+        dueDate,
+        maxScore: maxScore || 100,
+        difficulty: difficulty || 'MEDIUM'
       });
       res.status(201).json(homework);
     } catch (error) {
@@ -147,7 +130,10 @@ class HomeworkController {
       }
 
       const { id } = req.params;
-      const { fileUrl } = req.body;
+      const fileUrl = req.file ? `/uploads/${req.file.filename}` : req.body.fileUrl;
+      if (!fileUrl) {
+        return res.status(400).json({ error: 'File is required' });
+      }
       const submission = await homeworkService.submitHomework(id, req.user.id, fileUrl);
       res.status(201).json(submission);
     } catch (error) {
@@ -208,6 +194,47 @@ class HomeworkController {
         return res.status(404).json({ error: error.message });
       }
       res.status(500).json({ error: 'Failed to update homework' });
+    }
+  }
+
+  /**
+   * Добавить комментарий к отправке ДЗ
+   * @route POST /api/homeworks/submissions/:id/comments
+   */
+  async addComment(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { id } = req.params;
+      const comment = await homeworkService.addComment(id, req.user.id, req.body.content);
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error('Add comment error:', error);
+      if (error.message === 'Submission not found' || error.message === 'Access denied') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to add comment' });
+    }
+  }
+
+  /**
+   * Обновить комментарий к отправке ДЗ
+   * @route PUT /api/homeworks/submissions/:submissionId/comments/:commentId
+   */
+  async updateComment(req, res) {
+    try {
+      const { submissionId, commentId } = req.params;
+      const comment = await homeworkService.updateComment(submissionId, commentId, req.user.id, req.body.content);
+      res.json(comment);
+    } catch (error) {
+      console.error('Update comment error:', error);
+      if (error.message === 'Comment not found' || error.message === 'Access denied') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to update comment' });
     }
   }
 }

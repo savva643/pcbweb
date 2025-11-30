@@ -129,6 +129,17 @@ router.post('/:id/comments', authenticate, submissionValidators.addComment, subm
 
 /**
  * @swagger
+ * /api/submissions/{submissionId}/comments/{commentId}:
+ *   put:
+ *     summary: Обновить комментарий
+ *     tags: [Submissions]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/:submissionId/comments/:commentId', authenticate, submissionController.updateComment);
+
+/**
+ * @swagger
  * /api/submissions/{id}/versions:
  *   get:
  *     summary: Получить версии отправки

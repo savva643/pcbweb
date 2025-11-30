@@ -73,6 +73,24 @@ class GroupRepository extends BaseRepository {
                 id: true,
                 title: true,
                 description: true
+              },
+              include: {
+                tests: {
+                  where: {
+                    isActive: true
+                  },
+                  include: {
+                    _count: {
+                      select: {
+                        questions: true,
+                        attempts: true
+                      }
+                    }
+                  },
+                  orderBy: {
+                    createdAt: 'desc'
+                  }
+                }
               }
             }
           }

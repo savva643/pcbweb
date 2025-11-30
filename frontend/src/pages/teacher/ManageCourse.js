@@ -43,6 +43,7 @@ const ManageCourse = () => {
   const [course, setCourse] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
@@ -53,26 +54,30 @@ const ManageCourse = () => {
     type: 'text',
     order: 0,
     file: null,
+    assignmentId: '',
   });
   const [assignmentForm, setAssignmentForm] = useState({
     title: '',
     description: '',
     dueDate: '',
     maxScore: 100,
+    difficulty: 'MEDIUM',
   });
   const [error, setError] = useState('');
 
   const fetchCourseData = useCallback(async () => {
     try {
-      const [courseRes, materialsRes, assignmentsRes] = await Promise.all([
+      const [courseRes, materialsRes, assignmentsRes, testsRes] = await Promise.all([
         axios.get(`${API_URL}/courses/${id}`),
         axios.get(`${API_URL}/materials/course/${id}`),
         axios.get(`${API_URL}/assignments/course/${id}`),
+        axios.get(`${API_URL}/tests/course/${id}`),
       ]);
 
       setCourse(courseRes.data);
       setMaterials(materialsRes.data);
       setAssignments(assignmentsRes.data);
+      setTests(testsRes.data);
     } catch (error) {
       setError('Не удалось загрузить данные курса');
       console.error('Fetch course error:', error);
@@ -93,6 +98,9 @@ const ManageCourse = () => {
       formData.append('description', materialForm.description || '');
       formData.append('type', materialForm.type);
       formData.append('order', materialForm.order);
+      if (materialForm.assignmentId) {
+        formData.append('assignmentId', materialForm.assignmentId);
+      }
       if (materialForm.file) {
         formData.append('file', materialForm.file);
       }
@@ -104,7 +112,7 @@ const ManageCourse = () => {
       });
 
       setMaterialDialogOpen(false);
-      setMaterialForm({ title: '', description: '', type: 'text', order: 0, file: null });
+      setMaterialForm({ title: '', description: '', type: 'text', order: 0, file: null, assignmentId: '' });
       fetchCourseData();
     } catch (error) {
       setError(error.response?.data?.error || 'Не удалось создать материал');
@@ -115,12 +123,15 @@ const ManageCourse = () => {
     try {
       await axios.post(`${API_URL}/assignments`, {
         courseId: id,
-        ...assignmentForm,
+        title: assignmentForm.title,
+        description: assignmentForm.description,
         dueDate: assignmentForm.dueDate || null,
+        maxScore: assignmentForm.maxScore,
+        difficulty: assignmentForm.difficulty,
       });
 
       setAssignmentDialogOpen(false);
-      setAssignmentForm({ title: '', description: '', dueDate: '', maxScore: 100 });
+      setAssignmentForm({ title: '', description: '', dueDate: '', maxScore: 100, difficulty: 'MEDIUM' });
       fetchCourseData();
     } catch (error) {
       setError(error.response?.data?.error || 'Не удалось создать задание');
@@ -193,6 +204,7 @@ const ManageCourse = () => {
       >
         <Tab label="Материалы" />
         <Tab label="Задания" />
+        <Tab label="Тесты" />
         <Tab label="Чат" />
       </Tabs>
 
@@ -274,7 +286,7 @@ const ManageCourse = () => {
                             {assignment.description}
                           </Typography>
                         )}
-                        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                           {assignment.dueDate && (
                             <Chip
                               label={`Срок: ${new Date(assignment.dueDate).toLocaleDateString('ru-RU')}`}
@@ -286,6 +298,13 @@ const ManageCourse = () => {
                             size="small"
                             color="primary"
                           />
+                          {assignment.difficulty && (
+                            <Chip
+                              label={`Сложность: ${assignment.difficulty === 'LOW' ? 'Низкая' : assignment.difficulty === 'MEDIUM' ? 'Средняя' : 'Высокая'}`}
+                              size="small"
+                              color={assignment.difficulty === 'LOW' ? 'success' : assignment.difficulty === 'MEDIUM' ? 'warning' : 'error'}
+                            />
+                          )}
                         </Box>
                       </Box>
                       <Button
@@ -304,6 +323,84 @@ const ManageCourse = () => {
       )}
 
       {tabValue === 2 && (
+        <Box>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="h6">Тесты ({tests.length})</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => navigate(`/teacher/course/${id}/create-test`)}
+            >
+              Создать тест
+            </Button>
+          </Box>
+          {tests.length === 0 ? (
+            <Alert severity="info">Тесты пока не добавлены</Alert>
+          ) : (
+            <List>
+              {tests.map((test) => (
+                <Card key={test.id} sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6">{test.title}</Typography>
+                        {test.description && (
+                          <Typography variant="body2" color="text.secondary" paragraph>
+                            {test.description}
+                          </Typography>
+                        )}
+                        <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                          <Chip
+                            label={`Вопросов: ${test._count?.questions || 0}`}
+                            size="small"
+                          />
+                          <Chip
+                            label={`Макс. балл: ${test.maxScore}`}
+                            size="small"
+                            color="primary"
+                          />
+                          {test.timeLimit && (
+                            <Chip
+                              label={`Время: ${test.timeLimit} мин`}
+                              size="small"
+                            />
+                          )}
+                          {test.difficulty && (
+                            <Chip
+                              label={`Сложность: ${test.difficulty === 'LOW' ? 'Низкая' : test.difficulty === 'MEDIUM' ? 'Средняя' : 'Высокая'}`}
+                              size="small"
+                              color={test.difficulty === 'LOW' ? 'success' : test.difficulty === 'MEDIUM' ? 'warning' : 'error'}
+                            />
+                          )}
+                          <Chip
+                            label={test.isActive ? 'Активен' : 'Закрыт'}
+                            size="small"
+                            color={test.isActive ? 'success' : 'default'}
+                          />
+                          <Chip
+                            label={test.autoGrade ? 'Автопроверка' : 'Ручная проверка'}
+                            size="small"
+                            color={test.autoGrade ? 'info' : 'warning'}
+                          />
+                        </Box>
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        onClick={() => navigate(`/teacher/test/${test.id}`)}
+                        sx={{ ml: 2 }}
+                      >
+                        Просмотр попыток
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </List>
+          )}
+        </Box>
+      )}
+
+      {tabValue === 3 && (
         <Box>
           <CourseChat courseId={id} user={user} course={course} />
         </Box>
@@ -339,6 +436,7 @@ const ManageCourse = () => {
             >
               <MenuItem value="text">Текст</MenuItem>
               <MenuItem value="video">Видео</MenuItem>
+              <MenuItem value="image">Изображение</MenuItem>
               <MenuItem value="file">Файл</MenuItem>
               <MenuItem value="scorm">SCORM</MenuItem>
             </Select>
@@ -351,9 +449,24 @@ const ManageCourse = () => {
             onChange={(e) => setMaterialForm({ ...materialForm, order: parseInt(e.target.value) || 0 })}
             margin="normal"
           />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Связать с заданием (опционально)</InputLabel>
+            <Select
+              value={materialForm.assignmentId}
+              onChange={(e) => setMaterialForm({ ...materialForm, assignmentId: e.target.value })}
+              label="Связать с заданием (опционально)"
+            >
+              <MenuItem value="">Нет</MenuItem>
+              {assignments.map((assignment) => (
+                <MenuItem key={assignment.id} value={assignment.id}>
+                  {assignment.title}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <input
             type="file"
-            accept="*/*"
+            accept={materialForm.type === 'image' ? 'image/*' : materialForm.type === 'video' ? 'video/*' : '*/*'}
             onChange={(e) => setMaterialForm({ ...materialForm, file: e.target.files[0] })}
             style={{ marginTop: 16 }}
           />
@@ -391,26 +504,43 @@ const ManageCourse = () => {
             multiline
             rows={3}
           />
-          <TextField
-            fullWidth
-            type="datetime-local"
-            label="Срок сдачи"
-            value={assignmentForm.dueDate}
-            onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })}
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            fullWidth
-            type="number"
-            label="Максимальный балл"
-            value={assignmentForm.maxScore}
-            onChange={(e) => setAssignmentForm({ ...assignmentForm, maxScore: parseInt(e.target.value) || 100 })}
-            margin="normal"
-          />
+          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <TextField
+              type="datetime-local"
+              label="Срок сдачи"
+              value={assignmentForm.dueDate}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })}
+              margin="normal"
+              InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              type="number"
+              label="Максимальный балл"
+              value={assignmentForm.maxScore}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, maxScore: parseInt(e.target.value) || 100 })}
+              margin="normal"
+              sx={{ width: 200 }}
+            />
+            <FormControl margin="normal" sx={{ width: 200 }}>
+              <InputLabel>Сложность</InputLabel>
+              <Select
+                value={assignmentForm.difficulty}
+                label="Сложность"
+                onChange={(e) => setAssignmentForm({ ...assignmentForm, difficulty: e.target.value })}
+              >
+                <MenuItem value="LOW">Низкая</MenuItem>
+                <MenuItem value="MEDIUM">Средняя</MenuItem>
+                <MenuItem value="HIGH">Высокая</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAssignmentDialogOpen(false)}>Отмена</Button>
+          <Button onClick={() => {
+            setAssignmentDialogOpen(false);
+            setAssignmentForm({ title: '', description: '', dueDate: '', maxScore: 100, difficulty: 'MEDIUM' });
+          }}>Отмена</Button>
           <Button
             onClick={handleAssignmentSubmit}
             variant="contained"

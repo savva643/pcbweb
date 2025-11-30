@@ -115,7 +115,8 @@ class TestService {
       title: data.title,
       description: data.description,
       maxScore: data.maxScore ? parseInt(data.maxScore) : 100,
-      timeLimit: data.timeLimit ? parseInt(data.timeLimit) : null
+      timeLimit: data.timeLimit ? parseInt(data.timeLimit) : null,
+      difficulty: data.difficulty || 'MEDIUM'
     }, {
       questions: true
     });
@@ -190,7 +191,13 @@ class TestService {
     // Проверка незавершенной попытки
     const existingAttempt = await testRepository.findAttempt(testId, studentId);
     if (existingAttempt && !existingAttempt.completedAt) {
-      return existingAttempt;
+      // Возвращаем полную информацию о попытке
+      return testRepository.findAttemptById(existingAttempt.id);
+    }
+
+    // Проверяем, можно ли еще проходить тест
+    if (!test.isActive || (test.closedAt && new Date(test.closedAt) < new Date())) {
+      throw new Error('Test is closed');
     }
 
     return testRepository.createAttempt({
@@ -233,53 +240,86 @@ class TestService {
     let totalScore = 0;
     const answerRecords = [];
 
-    // Проверка каждого ответа
-    for (const answer of answers) {
-      const question = test.questions.find(q => q.id === answer.questionId);
-      if (!question) continue;
+    // Если тест с автоматической проверкой, проверяем ответы
+    if (test.autoGrade) {
+      // Проверка каждого ответа
+      for (const answer of answers) {
+        const question = test.questions.find(q => q.id === answer.questionId);
+        if (!question) continue;
 
-      let isCorrect = false;
-      let points = 0;
+        let isCorrect = false;
+        let points = 0;
 
-      if (question.type === 'multiple_choice') {
-        const selectedAnswer = question.answers.find(a => a.id === answer.answerIds[0]);
-        if (selectedAnswer && selectedAnswer.isCorrect) {
-          isCorrect = true;
-          points = question.points;
-        }
-      } else if (question.type === 'true_false') {
-        const correctAnswer = question.answers.find(a => a.isCorrect);
-        if (correctAnswer && answer.answerIds.includes(correctAnswer.id)) {
-          isCorrect = true;
-          points = question.points;
-        }
-      } else if (question.type === 'matching') {
-        const correctPairs = question.answers.filter(a => a.isCorrect);
-        const selectedPairs = answer.answerIds.map(aid => {
-          const ans = question.answers.find(a => a.id === aid);
-          return ans ? { id: ans.id, matchKey: ans.matchKey } : null;
-        }).filter(Boolean);
+        if (question.type === 'multiple_choice') {
+          const selectedAnswer = question.answers.find(a => a.id === answer.answerIds[0]);
+          if (selectedAnswer && selectedAnswer.isCorrect) {
+            isCorrect = true;
+            points = question.points;
+          }
+        } else if (question.type === 'true_false') {
+          const correctAnswer = question.answers.find(a => a.isCorrect);
+          if (correctAnswer && answer.answerIds.includes(correctAnswer.id)) {
+            isCorrect = true;
+            points = question.points;
+          }
+        } else if (question.type === 'matching') {
+          const correctPairs = question.answers.filter(a => a.isCorrect);
+          const selectedPairs = answer.answerIds.map(aid => {
+            const ans = question.answers.find(a => a.id === aid);
+            return ans ? { id: ans.id, matchKey: ans.matchKey } : null;
+          }).filter(Boolean);
 
-        if (selectedPairs.length === correctPairs.length) {
-          const allCorrect = selectedPairs.every(sp => 
-            correctPairs.some(cp => cp.id === sp.id && cp.matchKey === sp.matchKey)
-          );
-          if (allCorrect) {
+          if (selectedPairs.length === correctPairs.length) {
+            const allCorrect = selectedPairs.every(sp => 
+              correctPairs.some(cp => cp.id === sp.id && cp.matchKey === sp.matchKey)
+            );
+            if (allCorrect) {
+              isCorrect = true;
+              points = question.points;
+            }
+          }
+        } else if (question.type === 'text_input') {
+          // Для текстовых ответов проверяем по точному совпадению (без учета регистра)
+          const correctAnswers = question.answers.filter(a => a.isCorrect);
+          const userAnswer = (answer.textAnswer || '').trim().toLowerCase();
+          
+          const isMatch = correctAnswers.some(ca => {
+            const correctText = ca.text.trim().toLowerCase();
+            return correctText === userAnswer;
+          });
+          
+          if (isMatch) {
             isCorrect = true;
             points = question.points;
           }
         }
+
+        totalScore += points;
+
+        answerRecords.push({
+          attemptId,
+          questionId: question.id,
+          answerIds: answer.answerIds || [],
+          textAnswer: answer.textAnswer || null,
+          isCorrect,
+          points
+        });
       }
+    } else {
+      // Для тестов с ручной проверкой просто сохраняем ответы без оценки
+      for (const answer of answers) {
+        const question = test.questions.find(q => q.id === answer.questionId);
+        if (!question) continue;
 
-      totalScore += points;
-
-      answerRecords.push({
-        attemptId,
-        questionId: question.id,
-        answerIds: answer.answerIds,
-        isCorrect,
-        points
-      });
+        answerRecords.push({
+          attemptId,
+          questionId: question.id,
+          answerIds: answer.answerIds || [],
+          textAnswer: answer.textAnswer || null,
+          isCorrect: null, // Не проверяем автоматически
+          points: 0 // Баллы выставит преподаватель
+        });
+      }
     }
 
     // Создать записи ответов
@@ -287,7 +327,7 @@ class TestService {
 
     // Обновить попытку
     const updatedAttempt = await testRepository.updateAttempt(attemptId, {
-      score: totalScore,
+      score: test.autoGrade ? totalScore : 0, // Для ручной проверки начальный балл 0
       completedAt: new Date()
     });
 

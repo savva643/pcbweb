@@ -99,6 +99,18 @@ class TestRepository extends BaseRepository {
               }
             }
           }
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
         }
       }
     });
@@ -131,6 +143,18 @@ class TestRepository extends BaseRepository {
               }
             }
           }
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
         }
       }
     });
@@ -144,6 +168,121 @@ class TestRepository extends BaseRepository {
   async createAnswers(answers) {
     return prisma.testAttemptAnswer.createMany({
       data: answers
+    });
+  }
+
+  /**
+   * Получить попытки студента по тесту
+   * @param {string} testId - ID теста
+   * @param {string} studentId - ID студента
+   * @returns {Promise<Array>}
+   */
+  async findAttemptsByTestAndStudent(testId, studentId) {
+    return prisma.testAttempt.findMany({
+      where: {
+        testId,
+        studentId
+      },
+      include: {
+        answers: {
+          include: {
+            question: {
+              include: {
+                answers: true
+              }
+            }
+          }
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
+        }
+      },
+      orderBy: { startedAt: 'desc' }
+    });
+  }
+
+  /**
+   * Получить попытки по тесту
+   * @param {string} testId - ID теста
+   * @returns {Promise<Array>}
+   */
+  async findAttemptsByTest(testId) {
+    return prisma.testAttempt.findMany({
+      where: { testId },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
+        }
+      },
+      orderBy: { completedAt: 'desc' }
+    });
+  }
+
+  /**
+   * Создать комментарий к попытке теста
+   * @param {object} data - Данные комментария
+   * @returns {Promise<object>}
+   */
+  async createComment(data) {
+    return prisma.testAttemptComment.create({
+      data,
+      include: {
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Обновить комментарий к попытке теста
+   * @param {string} commentId - ID комментария
+   * @param {object} data - Данные для обновления
+   * @returns {Promise<object>}
+   */
+  async updateComment(commentId, data) {
+    return prisma.testAttemptComment.update({
+      where: { id: commentId },
+      data,
+      include: {
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
     });
   }
 }

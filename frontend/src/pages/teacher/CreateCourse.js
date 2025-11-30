@@ -11,6 +11,10 @@ import {
   FormControlLabel,
   Switch,
   FormHelperText,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -23,6 +27,7 @@ const CreateCourse = () => {
     description: '',
     isPrivate: false,
     allowedEmails: '',
+    difficulty: 'MEDIUM',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -105,6 +110,18 @@ const CreateCourse = () => {
                 placeholder="student1@test.com, student2@test.com"
               />
             )}
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Сложность курса</InputLabel>
+              <Select
+                value={formData.difficulty}
+                label="Сложность курса"
+                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+              >
+                <MenuItem value="LOW">Низкая</MenuItem>
+                <MenuItem value="MEDIUM">Средняя</MenuItem>
+                <MenuItem value="HIGH">Высокая</MenuItem>
+              </Select>
+            </FormControl>
             <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
               <Button
                 type="submit"

@@ -40,7 +40,8 @@ class MaterialController {
         description: req.body.description,
         type: req.body.type,
         contentUrl: req.file ? `/uploads/${req.file.filename}` : null,
-        order: req.body.order
+        order: req.body.order,
+        assignmentId: req.body.assignmentId || null
       });
 
       res.status(201).json(material);
@@ -70,7 +71,8 @@ class MaterialController {
         description: req.body.description,
         type: req.body.type,
         order: req.body.order,
-        contentUrl: req.file ? `/uploads/${req.file.filename}` : undefined
+        contentUrl: req.file ? `/uploads/${req.file.filename}` : undefined,
+        assignmentId: req.body.assignmentId !== undefined ? (req.body.assignmentId || null) : undefined
       });
 
       res.json(material);

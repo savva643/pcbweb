@@ -51,7 +51,19 @@ class HomeworkRepository extends BaseRepository {
                 email: true
               }
             },
-            grade: true
+            grade: true,
+            comments: {
+              include: {
+                author: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true
+                  }
+                }
+              },
+              orderBy: { createdAt: 'asc' }
+            }
           }
         },
         _count: {
@@ -80,7 +92,19 @@ class HomeworkRepository extends BaseRepository {
             email: true
           }
         },
-        grade: true
+        grade: true,
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
+        }
       },
       orderBy: { submittedAt: 'desc' }
     });
@@ -144,7 +168,19 @@ class HomeworkRepository extends BaseRepository {
             email: true
           }
         },
-        grade: true
+        grade: true,
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
+        }
       }
     });
   }

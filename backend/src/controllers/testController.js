@@ -181,6 +181,109 @@ class TestController {
       res.status(500).json({ error: 'Failed to update test' });
     }
   }
+
+  /**
+   * Получить попытки студента по тесту
+   * @route GET /api/tests/:id/attempts
+   */
+  async getStudentAttempts(req, res) {
+    try {
+      const { id } = req.params;
+      const testRepository = require('../repositories/testRepository');
+      const attempts = await testRepository.findAttemptsByTestAndStudent(id, req.user.id);
+      res.json(attempts);
+    } catch (error) {
+      console.error('Get student attempts error:', error);
+      res.status(500).json({ error: 'Failed to fetch attempts' });
+    }
+  }
+
+  /**
+   * Получить все попытки по тесту (для преподавателя)
+   * @route GET /api/tests/:id/attempts/all
+   */
+  async getTestAttempts(req, res) {
+    try {
+      const { id } = req.params;
+      const attempts = await testService.getTestAttempts(id, req.user.id);
+      res.json(attempts);
+    } catch (error) {
+      console.error('Get test attempts error:', error);
+      if (error.message === 'Access denied' || error.message === 'Test not found') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to fetch attempts' });
+    }
+  }
+
+  /**
+   * Оценить попытку теста (для преподавателя)
+   * @route POST /api/tests/attempts/:attemptId/grade
+   */
+  async gradeAttempt(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { attemptId } = req.params;
+      const attempt = await testService.gradeAttempt(attemptId, req.user.id, req.body);
+      res.json(attempt);
+    } catch (error) {
+      console.error('Grade attempt error:', error);
+      if (error.message === 'Access denied' || error.message === 'Attempt not found') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to grade attempt' });
+    }
+  }
+
+  /**
+   * Добавить комментарий к попытке теста
+   * @route POST /api/tests/attempts/:attemptId/comments
+   */
+  async addComment(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { attemptId } = req.params;
+      const comment = await testService.addComment(attemptId, req.user.id, req.body.content);
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error('Add comment error:', error);
+      if (error.message === 'Attempt not found' || error.message === 'Access denied') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to add comment' });
+    }
+  }
+
+  /**
+   * Обновить комментарий к попытке теста
+   * @route PUT /api/tests/attempts/:attemptId/comments/:commentId
+   */
+  async updateComment(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { attemptId, commentId } = req.params;
+      const comment = await testService.updateComment(attemptId, commentId, req.user.id, req.body.content);
+      res.json(comment);
+    } catch (error) {
+      console.error('Update comment error:', error);
+      if (error.message === 'Comment not found' || error.message === 'Access denied') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to update comment' });
+    }
+  }
 }
 
 module.exports = new TestController();

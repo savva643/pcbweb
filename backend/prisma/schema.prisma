@@ -51,13 +51,21 @@ model User {
   comments            Comment[]
   chatMessages        ChatMessage[]
   testAttempts        TestAttempt[]
+  testAttemptComments TestAttemptComment[]
   groupsAsTeacher     Group[]
   groupMemberships    GroupMember[]
   homeworkSubmissions HomeworkSubmission[]
   homeworkGrades      HomeworkGrade[]
+  homeworkComments    HomeworkComment[]
   gradeRecords        StudentGradeRecord[]
 
   @@map("users")
+}
+
+enum Difficulty {
+  LOW
+  MEDIUM
+  HIGH
 }
 
 model Course {
@@ -67,6 +75,7 @@ model Course {
   teacherId    String
   isPrivate    Boolean  @default(false) // Персональный курс
   allowedEmails String? // Список email через запятую для персональных курсов
+  difficulty   Difficulty @default(MEDIUM) // Сложность курса
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -102,15 +111,17 @@ model Material {
   courseId    String
   title       String
   description String?
-  type        String   // video, text, scorm, file
+  type        String   // video, text, scorm, file, image
   contentUrl  String?  // URL to the material file
   order       Int      @default(0)
+  assignmentId String? // Связь с заданием (после материала выполнить задание)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  course    Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  versions  MaterialVersion[]
+  course     Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  assignment Assignment?       @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  versions   MaterialVersion[]
 
   @@map("materials")
 }
@@ -122,12 +133,14 @@ model Assignment {
   description String?
   dueDate     DateTime?
   maxScore    Int      @default(100)
+  difficulty  Difficulty @default(MEDIUM) // Сложность задания
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
   course     Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
   submissions Submission[]
+  materials  Material[]  // Материалы, связанные с заданием
 
   @@map("assignments")
 }
@@ -244,6 +257,7 @@ model Test {
   timeLimit   Int?     // Лимит времени в минутах
   isActive    Boolean  @default(true) // Можно ли еще проходить
   autoGrade   Boolean  @default(true) // Автоматическая проверка
+  difficulty  Difficulty @default(MEDIUM) // Сложность теста
   closedAt    DateTime? // Дата закрытия теста
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -308,7 +322,8 @@ model TestAttemptAnswer {
   id          String   @id @default(uuid())
   attemptId   String
   questionId  String
-  answerIds   String[] // Массив ID выбранных ответов
+  answerIds   String[] // Массив ID выбранных ответов (для multiple_choice, matching)
+  textAnswer  String?  // Текстовый ответ (для text_input)
   isCorrect   Boolean?
   points      Int?
 
@@ -317,6 +332,21 @@ model TestAttemptAnswer {
   question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@map("test_attempt_answers")
+}
+
+model TestAttemptComment {
+  id          String   @id @default(uuid())
+  attemptId   String
+  authorId    String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  attempt TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  author  User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("test_attempt_comments")
 }
 
 // Группы
@@ -359,10 +389,14 @@ model Homework {
   groupId     String
   title       String
   description String?
+  instructions String? // Инструкции по выполнению
+  requirements String? // Требования к выполнению
+  resources   String? // Ресурсы и материалы
   dueDate     DateTime?
   maxScore    Int      @default(100)
   isActive    Boolean  @default(true) // Можно ли еще отправлять
   autoGrade   Boolean  @default(false) // Автоматическая проверка
+  difficulty  Difficulty @default(MEDIUM) // Сложность ДЗ
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -383,9 +417,10 @@ model HomeworkSubmission {
   updatedAt   DateTime         @updatedAt
 
   // Relations
-  homework Homework  @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
-  student  User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  homework Homework          @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  student  User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
   grade    HomeworkGrade?
+  comments HomeworkComment[]
 
   @@map("homework_submissions")
 }
@@ -405,6 +440,21 @@ model HomeworkGrade {
   student    User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("homework_grades")
+}
+
+model HomeworkComment {
+  id          String   @id @default(uuid())
+  submissionId String
+  authorId    String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  submission HomeworkSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  author     User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("homework_comments")
 }
 
 // Назначение курсов группам

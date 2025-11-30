@@ -2,6 +2,7 @@ const express = require('express');
 const homeworkController = require('../controllers/homeworkController');
 const homeworkValidators = require('../validators/homeworkValidators');
 const { authenticate, requireRole } = require('../middleware/auth');
+const upload = require('../utils/upload');
 
 const router = express.Router();
 
@@ -69,7 +70,7 @@ router.delete('/:id', authenticate, requireRole('TEACHER'), homeworkValidators.h
  *     security:
  *       - bearerAuth: []
  */
-router.post('/:id/submit', authenticate, requireRole('STUDENT'), homeworkValidators.submitHomework, homeworkController.submitHomework);
+router.post('/:id/submit', authenticate, requireRole('STUDENT'), upload.single('file'), homeworkValidators.submitHomework, homeworkController.submitHomework);
 
 /**
  * @swagger
@@ -92,6 +93,28 @@ router.post('/submissions/:id/grade', authenticate, requireRole('TEACHER'), home
  *       - bearerAuth: []
  */
 router.put('/:id/active', authenticate, requireRole('TEACHER'), homeworkValidators.homeworkId, homeworkController.setHomeworkActive);
+
+/**
+ * @swagger
+ * /api/homeworks/submissions/{id}/comments:
+ *   post:
+ *     summary: Добавить комментарий к отправке ДЗ
+ *     tags: [Homeworks]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/submissions/:id/comments', authenticate, homeworkValidators.addComment, homeworkController.addComment);
+
+/**
+ * @swagger
+ * /api/homeworks/submissions/{submissionId}/comments/{commentId}:
+ *   put:
+ *     summary: Обновить комментарий к отправке ДЗ
+ *     tags: [Homeworks]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/submissions/:submissionId/comments/:commentId', authenticate, homeworkValidators.updateComment, homeworkController.updateComment);
 
 module.exports = router;
 

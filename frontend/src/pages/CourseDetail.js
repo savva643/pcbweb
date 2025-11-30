@@ -50,7 +50,12 @@ const CourseDetail = () => {
       ]);
 
       setCourse(courseRes.data);
-      setMaterials(materialsRes.data);
+      // Включаем связанные задания в материалы
+      const materialsWithAssignments = materialsRes.data.map(material => ({
+        ...material,
+        assignment: material.assignmentId ? assignmentsRes.data.find(a => a.id === material.assignmentId) : null
+      }));
+      setMaterials(materialsWithAssignments);
       setAssignments(assignmentsRes.data);
     } catch (error) {
       setError('Не удалось загрузить данные курса');
@@ -163,7 +168,15 @@ const CourseDetail = () => {
                       {material.type === 'text' && <Description />}
                       {material.type === 'file' && <Description />}
                       {material.type === 'scorm' && <VideoLibrary />}
+                      {material.type === 'image' && <ImageIcon />}
                       <Typography variant="h6">{material.title}</Typography>
+                      {material.assignment && (
+                        <Chip
+                          label="С заданием"
+                          size="small"
+                          color="primary"
+                        />
+                      )}
                       {user?.role === 'STUDENT' && (
                         <Chip
                           icon={
@@ -189,9 +202,28 @@ const CourseDetail = () => {
                     {material.contentUrl && (
                       <Box sx={{ mt: 2 }}>
                         {material.type === 'video' ? (
-                          <video controls width="100%" style={{ maxHeight: '400px' }}>
+                          <video controls width="100%" style={{ maxHeight: '600px', borderRadius: '8px' }}>
                             <source src={`${API_URL.replace('/api', '')}${material.contentUrl}`} />
+                            Ваш браузер не поддерживает видео.
                           </video>
+                        ) : material.type === 'image' ? (
+                          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                            <img 
+                              src={`${API_URL.replace('/api', '')}${material.contentUrl}`} 
+                              alt={material.title}
+                              style={{ maxWidth: '100%', maxHeight: '600px', borderRadius: '8px' }}
+                            />
+                          </Box>
+                        ) : material.type === 'scorm' ? (
+                          <Box sx={{ border: '1px solid #ddd', borderRadius: '8px', p: 2, minHeight: '600px' }}>
+                            <iframe
+                              src={`${API_URL.replace('/api', '')}${material.contentUrl}`}
+                              width="100%"
+                              height="600px"
+                              style={{ border: 'none', borderRadius: '8px' }}
+                              title={material.title}
+                            />
+                          </Box>
                         ) : (
                           <Button
                             variant="outlined"
@@ -202,6 +234,20 @@ const CourseDetail = () => {
                             Скачать файл
                           </Button>
                         )}
+                      </Box>
+                    )}
+                    {material.assignment && (
+                      <Box sx={{ mt: 2, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                          После изучения материала выполните задание:
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          onClick={() => navigate(`/assignment/${material.assignment.id}`)}
+                          sx={{ mt: 1 }}
+                        >
+                          {material.assignment.title}
+                        </Button>
                       </Box>
                     )}
                     {user?.role === 'STUDENT' && !isMaterialCompleted(material.id) && (

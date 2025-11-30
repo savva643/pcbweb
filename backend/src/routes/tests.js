@@ -240,4 +240,59 @@ router.get('/:id/attempts/:attemptId', authenticate, testValidators.testId, test
  */
 router.put('/:id/active', authenticate, requireRole('TEACHER'), testValidators.testId, testController.setTestActive);
 
+/**
+ * @swagger
+ * /api/tests/{id}/attempts:
+ *   get:
+ *     summary: Получить попытки студента по тесту
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/:id/attempts', authenticate, requireRole('STUDENT'), testValidators.testId, testController.getStudentAttempts);
+
+/**
+ * @swagger
+ * /api/tests/{id}/attempts/all:
+ *   get:
+ *     summary: Получить все попытки по тесту (для преподавателя)
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/:id/attempts/all', authenticate, requireRole('TEACHER'), testValidators.testId, testController.getTestAttempts);
+
+/**
+ * @swagger
+ * /api/tests/attempts/{attemptId}/grade:
+ *   post:
+ *     summary: Оценить попытку теста (для преподавателя)
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/attempts/:attemptId/grade', authenticate, requireRole('TEACHER'), testValidators.attemptId, testController.gradeAttempt);
+
+/**
+ * @swagger
+ * /api/tests/attempts/{attemptId}/comments:
+ *   post:
+ *     summary: Добавить комментарий к попытке теста
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/attempts/:attemptId/comments', authenticate, testValidators.attemptId, testController.addComment);
+
+/**
+ * @swagger
+ * /api/tests/attempts/{attemptId}/comments/{commentId}:
+ *   put:
+ *     summary: Обновить комментарий к попытке теста
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/attempts/:attemptId/comments/:commentId', authenticate, testValidators.attemptId, testValidators.commentId, testController.updateComment);
+
 module.exports = router;

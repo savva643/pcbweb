@@ -108,8 +108,14 @@ class HomeworkService {
     }
 
     return homeworkRepository.create({
-      ...data,
+      title: data.title,
+      description: data.description,
+      instructions: data.instructions || null,
+      requirements: data.requirements || null,
+      resources: data.resources || null,
       dueDate: this.normalizeDate(data.dueDate),
+      maxScore: data.maxScore || 100,
+      difficulty: data.difficulty || 'MEDIUM',
       groupId
     });
   }
@@ -298,6 +304,103 @@ class HomeworkService {
     }
 
     return homeworkRepository.update(homeworkId, { isActive });
+  }
+
+  /**
+   * Добавить комментарий к отправке ДЗ
+   * @param {string} submissionId - ID отправки
+   * @param {string} authorId - ID автора
+   * @param {string} content - Содержимое комментария
+   * @returns {Promise<object>} Созданный комментарий
+   */
+  async addComment(submissionId, authorId, content) {
+    const prisma = require('../config/database');
+    const submission = await prisma.homeworkSubmission.findUnique({
+      where: { id: submissionId },
+      include: {
+        homework: {
+          include: {
+            group: true
+          }
+        }
+      }
+    });
+
+    if (!submission) {
+      throw new Error('Submission not found');
+    }
+
+    // Проверка доступа
+    if (submission.studentId !== authorId && 
+        submission.homework.group.teacherId !== authorId) {
+      throw new Error('Access denied');
+    }
+
+    return prisma.homeworkComment.create({
+      data: {
+        submissionId,
+        authorId,
+        content
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Обновить комментарий к отправке ДЗ
+   * @param {string} submissionId - ID отправки
+   * @param {string} commentId - ID комментария
+   * @param {string} userId - ID пользователя
+   * @param {string} content - Новое содержимое комментария
+   * @returns {Promise<object>} Обновленный комментарий
+   */
+  async updateComment(submissionId, commentId, userId, content) {
+    const prisma = require('../config/database');
+    const comment = await prisma.homeworkComment.findUnique({
+      where: { id: commentId },
+      include: {
+        submission: {
+          include: {
+            homework: {
+              include: {
+                group: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!comment) {
+      throw new Error('Comment not found');
+    }
+
+    // Проверка доступа - только автор может изменить комментарий
+    if (comment.authorId !== userId) {
+      throw new Error('Access denied');
+    }
+
+    return prisma.homeworkComment.update({
+      where: { id: commentId },
+      data: { content },
+      include: {
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    });
   }
 }
 

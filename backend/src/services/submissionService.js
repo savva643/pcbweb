@@ -201,6 +201,45 @@ class SubmissionService {
       }
     });
   }
+
+  /**
+   * Обновить комментарий
+   * @param {string} submissionId - ID отправки
+   * @param {string} commentId - ID комментария
+   * @param {string} userId - ID пользователя
+   * @param {string} content - Новое содержимое комментария
+   * @returns {Promise<object>} Обновленный комментарий
+   */
+  async updateComment(submissionId, commentId, userId, content) {
+    const comment = await commentRepository.findById(commentId, {
+      submission: {
+        assignment: {
+          course: true
+        }
+      }
+    });
+
+    if (!comment) {
+      throw new Error('Comment not found');
+    }
+
+    // Проверка доступа - только автор может изменить комментарий
+    if (comment.authorId !== userId) {
+      throw new Error('Access denied');
+    }
+
+    return commentRepository.update(commentId, {
+      content
+    }, {
+      author: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true
+        }
+      }
+    });
+  }
 }
 
 module.exports = new SubmissionService();
