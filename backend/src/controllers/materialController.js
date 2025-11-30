@@ -39,7 +39,8 @@ class MaterialController {
         title: req.body.title,
         description: req.body.description,
         type: req.body.type,
-        contentUrl: req.file ? `/uploads/${req.file.filename}` : null,
+        contentUrl: req.file ? `/uploads/${req.file.filename}` : (req.body.contentUrl || null),
+        content: req.body.content || null,
         order: req.body.order,
         assignmentId: req.body.assignmentId || null
       });
@@ -71,7 +72,8 @@ class MaterialController {
         description: req.body.description,
         type: req.body.type,
         order: req.body.order,
-        contentUrl: req.file ? `/uploads/${req.file.filename}` : undefined,
+        contentUrl: req.file ? `/uploads/${req.file.filename}` : (req.body.contentUrl !== undefined ? req.body.contentUrl : undefined),
+        content: req.body.content !== undefined ? req.body.content : undefined,
         assignmentId: req.body.assignmentId !== undefined ? (req.body.assignmentId || null) : undefined
       });
 

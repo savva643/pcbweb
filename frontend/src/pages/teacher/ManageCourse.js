@@ -55,6 +55,7 @@ const ManageCourse = () => {
     order: 0,
     file: null,
     assignmentId: '',
+    content: ''
   });
   const [assignmentForm, setAssignmentForm] = useState({
     title: '',
@@ -101,6 +102,9 @@ const ManageCourse = () => {
       if (materialForm.assignmentId) {
         formData.append('assignmentId', materialForm.assignmentId);
       }
+      if (materialForm.content && (materialForm.type === 'text' || materialForm.type === 'markdown' || materialForm.type === 'wiki')) {
+        formData.append('content', materialForm.content);
+      }
       if (materialForm.file) {
         formData.append('file', materialForm.file);
       }
@@ -112,7 +116,7 @@ const ManageCourse = () => {
       });
 
       setMaterialDialogOpen(false);
-      setMaterialForm({ title: '', description: '', type: 'text', order: 0, file: null, assignmentId: '' });
+      setMaterialForm({ title: '', description: '', type: 'text', order: 0, file: null, assignmentId: '', content: '' });
       fetchCourseData();
     } catch (error) {
       setError(error.response?.data?.error || 'Не удалось создать материал');
@@ -235,12 +239,18 @@ const ManageCourse = () => {
                           {material.type === 'text' && <Description />}
                           {material.type === 'file' && <Description />}
                           {material.type === 'scorm' && <VideoLibrary />}
+                          {(material.type === 'markdown' || material.type === 'wiki') && <Description />}
                           <Typography variant="h6">{material.title}</Typography>
                           <Chip label={material.type} size="small" />
                         </Box>
                         {material.description && (
                           <Typography variant="body2" color="text.secondary">
                             {material.description}
+                          </Typography>
+                        )}
+                        {material.content && (material.type === 'text' || material.type === 'markdown' || material.type === 'wiki') && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                            Текстовый материал ({material.content.length} символов)
                           </Typography>
                         )}
                         {material.contentUrl && (
@@ -435,12 +445,26 @@ const ManageCourse = () => {
               label="Тип"
             >
               <MenuItem value="text">Текст</MenuItem>
+              <MenuItem value="markdown">Markdown</MenuItem>
+              <MenuItem value="wiki">Wiki</MenuItem>
               <MenuItem value="video">Видео</MenuItem>
               <MenuItem value="image">Изображение</MenuItem>
               <MenuItem value="file">Файл</MenuItem>
               <MenuItem value="scorm">SCORM</MenuItem>
             </Select>
           </FormControl>
+          {(materialForm.type === 'text' || materialForm.type === 'markdown' || materialForm.type === 'wiki') && (
+            <TextField
+              fullWidth
+              label="Содержимое"
+              value={materialForm.content}
+              onChange={(e) => setMaterialForm({ ...materialForm, content: e.target.value })}
+              margin="normal"
+              multiline
+              rows={10}
+              placeholder={materialForm.type === 'markdown' ? 'Введите Markdown текст...' : 'Введите текст...'}
+            />
+          )}
           <TextField
             fullWidth
             type="number"
@@ -464,12 +488,14 @@ const ManageCourse = () => {
               ))}
             </Select>
           </FormControl>
-          <input
-            type="file"
-            accept={materialForm.type === 'image' ? 'image/*' : materialForm.type === 'video' ? 'video/*' : '*/*'}
-            onChange={(e) => setMaterialForm({ ...materialForm, file: e.target.files[0] })}
-            style={{ marginTop: 16 }}
-          />
+          {materialForm.type !== 'text' && materialForm.type !== 'markdown' && materialForm.type !== 'wiki' && (
+            <input
+              type="file"
+              accept={materialForm.type === 'image' ? 'image/*' : materialForm.type === 'video' ? 'video/*' : '*/*'}
+              onChange={(e) => setMaterialForm({ ...materialForm, file: e.target.files[0] })}
+              style={{ marginTop: 16 }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setMaterialDialogOpen(false)}>Отмена</Button>

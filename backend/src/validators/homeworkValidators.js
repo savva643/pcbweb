@@ -11,8 +11,12 @@ const homeworkValidators = {
     body('groupId').isUUID().withMessage('Invalid group ID'),
     body('title').trim().notEmpty().withMessage('Title is required'),
     body('description').optional().trim(),
+    body('instructions').optional().trim(),
+    body('requirements').optional().trim(),
+    body('resources').optional().trim(),
     body('dueDate').optional().isISO8601().withMessage('Invalid date format'),
-    body('maxScore').optional().isInt({ min: 1 }).withMessage('Max score must be a positive integer')
+    body('maxScore').optional().isInt({ min: 1 }).withMessage('Max score must be a positive integer'),
+    body('difficulty').optional().isIn(['LOW', 'MEDIUM', 'HIGH']).withMessage('Difficulty must be one of: LOW, MEDIUM, HIGH')
   ],
   updateHomework: [
     param('id').isUUID().withMessage('Invalid homework ID'),
@@ -23,7 +27,7 @@ const homeworkValidators = {
   ],
   submitHomework: [
     param('id').isUUID().withMessage('Invalid homework ID'),
-    body('fileUrl').notEmpty().withMessage('File URL is required')
+    body('fileUrl').optional().trim().withMessage('File URL must be a string')
   ],
   gradeHomework: [
     param('id').isUUID().withMessage('Invalid submission ID'),

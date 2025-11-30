@@ -22,8 +22,12 @@ const materialValidators = {
       .isLength({ max: 1000 })
       .withMessage('Description must not exceed 1000 characters'),
     body('type')
-      .isIn(['video', 'text', 'scorm', 'file'])
-      .withMessage('Type must be one of: video, text, scorm, file'),
+      .isIn(['video', 'text', 'scorm', 'file', 'image', 'markdown', 'wiki'])
+      .withMessage('Type must be one of: video, text, scorm, file, image, markdown, wiki'),
+    body('content')
+      .optional()
+      .isString()
+      .withMessage('Content must be a string'),
     body('order')
       .optional()
       .isInt({ min: 0 })
@@ -48,8 +52,12 @@ const materialValidators = {
       .withMessage('Description must not exceed 1000 characters'),
     body('type')
       .optional()
-      .isIn(['video', 'text', 'scorm', 'file'])
-      .withMessage('Type must be one of: video, text, scorm, file'),
+      .isIn(['video', 'text', 'scorm', 'file', 'image', 'markdown', 'wiki'])
+      .withMessage('Type must be one of: video, text, scorm, file, image, markdown, wiki'),
+    body('content')
+      .optional()
+      .isString()
+      .withMessage('Content must be a string'),
     body('order')
       .optional()
       .isInt({ min: 0 })

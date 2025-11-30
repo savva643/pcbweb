@@ -28,7 +28,15 @@ const testValidators = {
     body('timeLimit')
       .optional()
       .isInt({ min: 1 })
-      .withMessage('Time limit must be a positive integer (in minutes)')
+      .withMessage('Time limit must be a positive integer (in minutes)'),
+    body('autoGrade')
+      .optional()
+      .isBoolean()
+      .withMessage('Auto grade must be a boolean'),
+    body('difficulty')
+      .optional()
+      .isIn(['LOW', 'MEDIUM', 'HIGH'])
+      .withMessage('Difficulty must be one of: LOW, MEDIUM, HIGH')
   ],
 
   addQuestion: [
@@ -38,8 +46,8 @@ const testValidators = {
       .isUUID()
       .withMessage('Invalid test ID format'),
     body('type')
-      .isIn(['multiple_choice', 'matching', 'true_false'])
-      .withMessage('Type must be one of: multiple_choice, matching, true_false'),
+      .isIn(['multiple_choice', 'matching', 'true_false', 'text_input'])
+      .withMessage('Type must be one of: multiple_choice, matching, true_false, text_input'),
     body('question')
       .trim()
       .notEmpty()
@@ -51,9 +59,23 @@ const testValidators = {
       .isInt({ min: 1 })
       .withMessage('Points must be a positive integer'),
     body('answers')
-      .isArray({ min: 1 })
-      .withMessage('At least one answer is required'),
+      .optional()
+      .custom((value, { req }) => {
+        // Для text_input answers может быть пустым или отсутствовать
+        if (req.body.type === 'text_input') {
+          if (value && !Array.isArray(value)) {
+            throw new Error('Answers must be an array');
+          }
+          return true;
+        }
+        // Для других типов answers обязателен и должен содержать хотя бы один элемент
+        if (!value || !Array.isArray(value) || value.length === 0) {
+          throw new Error('At least one answer is required');
+        }
+        return true;
+      }),
     body('answers.*.text')
+      .optional()
       .trim()
       .notEmpty()
       .withMessage('Answer text is required'),
@@ -61,6 +83,10 @@ const testValidators = {
       .optional()
       .isBoolean()
       .withMessage('isCorrect must be a boolean'),
+    body('answers.*.matchKey')
+      .optional()
+      .trim()
+      .withMessage('Match key must be a string'),
     body('order')
       .optional()
       .isInt({ min: 0 })

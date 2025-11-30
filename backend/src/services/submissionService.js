@@ -99,6 +99,10 @@ class SubmissionService {
       throw new Error('Submission not found');
     }
 
+    if (!submission.assignment || !submission.assignment.course) {
+      throw new Error('Assignment or course not found');
+    }
+
     if (submission.assignment.course.teacherId !== teacherId) {
       throw new Error('Access denied');
     }

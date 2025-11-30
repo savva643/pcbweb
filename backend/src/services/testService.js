@@ -116,6 +116,7 @@ class TestService {
       description: data.description,
       maxScore: data.maxScore ? parseInt(data.maxScore) : 100,
       timeLimit: data.timeLimit ? parseInt(data.timeLimit) : null,
+      autoGrade: data.autoGrade !== undefined ? Boolean(data.autoGrade) : false,
       difficulty: data.difficulty || 'MEDIUM'
     }, {
       questions: true
@@ -148,18 +149,20 @@ class TestService {
       }
     });
 
-    // Создать ответы
-    const answerData = data.answers.map((answer, index) => ({
-      questionId: question.id,
-      text: answer.text,
-      isCorrect: answer.isCorrect || false,
-      order: answer.order !== undefined ? answer.order : index,
-      matchKey: answer.matchKey || null
-    }));
+    // Создать ответы (если они есть)
+    if (data.answers && Array.isArray(data.answers) && data.answers.length > 0) {
+      const answerData = data.answers.map((answer, index) => ({
+        questionId: question.id,
+        text: answer.text,
+        isCorrect: answer.isCorrect || false,
+        order: answer.order !== undefined ? answer.order : index,
+        matchKey: answer.matchKey || null
+      }));
 
-    await prisma.answer.createMany({
-      data: answerData
-    });
+      await prisma.answer.createMany({
+        data: answerData
+      });
+    }
 
     return prisma.question.findUnique({
       where: { id: question.id },

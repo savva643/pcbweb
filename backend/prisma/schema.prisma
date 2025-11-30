@@ -111,8 +111,9 @@ model Material {
   courseId    String
   title       String
   description String?
-  type        String   // video, text, scorm, file, image
+  type        String   // video, text, scorm, file, image, markdown, wiki
   contentUrl  String?  // URL to the material file
+  content     String?  // Текстовое содержимое (для text, markdown, wiki)
   order       Int      @default(0)
   assignmentId String? // Связь с заданием (после материала выполнить задание)
   createdAt   DateTime @default(now())

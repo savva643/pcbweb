@@ -27,6 +27,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import CourseChat from '../components/CourseChat';
+import ReactMarkdown from 'react-markdown';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -170,6 +171,7 @@ const CourseDetail = () => {
                       {material.type === 'file' && <Description />}
                       {material.type === 'scorm' && <VideoLibrary />}
                       {material.type === 'image' && <ImageIcon />}
+                      {(material.type === 'markdown' || material.type === 'wiki') && <Description />}
                       <Typography variant="h6">{material.title}</Typography>
                       {material.assignment && (
                         <Chip
@@ -200,6 +202,34 @@ const CourseDetail = () => {
                         {material.description}
                       </Typography>
                     )}
+                    {/* Отображение текстового контента (text, markdown, wiki) */}
+                    {material.content && (material.type === 'text' || material.type === 'markdown' || material.type === 'wiki') && (
+                      <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                        {material.type === 'markdown' ? (
+                          <Box sx={{ 
+                            '& h1, & h2, & h3, & h4, & h5, & h6': { mt: 2, mb: 1 },
+                            '& p': { mb: 1 },
+                            '& ul, & ol': { pl: 3, mb: 1 },
+                            '& code': { bgcolor: 'grey.200', p: 0.5, borderRadius: 0.5 },
+                            '& pre': { bgcolor: 'grey.100', p: 2, borderRadius: 1, overflow: 'auto' }
+                          }}>
+                            <ReactMarkdown>{material.content}</ReactMarkdown>
+                          </Box>
+                        ) : (
+                          <Typography 
+                            variant="body1" 
+                            component="div"
+                            sx={{ 
+                              whiteSpace: 'pre-wrap',
+                              '& p': { mb: 1 }
+                            }}
+                          >
+                            {material.content}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                    {/* Отображение файловых материалов (video, image, scorm, file) */}
                     {material.contentUrl && (
                       <Box sx={{ mt: 2 }}>
                         {material.type === 'video' ? (
@@ -225,7 +255,7 @@ const CourseDetail = () => {
                               title={material.title}
                             />
                           </Box>
-                        ) : (
+                        ) : material.type !== 'text' && material.type !== 'markdown' && material.type !== 'wiki' ? (
                           <Button
                             variant="outlined"
                             href={`${API_URL.replace('/api', '')}${material.contentUrl}`}
@@ -234,7 +264,7 @@ const CourseDetail = () => {
                           >
                             Скачать файл
                           </Button>
-                        )}
+                        ) : null}
                       </Box>
                     )}
                     {material.assignment && (
