@@ -122,7 +122,7 @@ router.post('/course/:courseId/personal-chat', authenticate, chatController.crea
  *       403:
  *         description: Доступ запрещен
  */
-router.post('/course/:courseId/topics', authenticate, chatValidators.createTopic, chatController.createTopic.bind(chatController));
+router.post('/course/:courseId/topics', authenticate, chatValidators.createCourseTopic, chatController.createTopic.bind(chatController));
 
 /**
  * @swagger
@@ -278,7 +278,7 @@ router.get('/group/:groupId/topics', authenticate, chatController.getGroupTopics
  *     security:
  *       - bearerAuth: []
  */
-router.post('/group/:groupId/topics', authenticate, chatValidators.createTopic, chatController.createGroupTopic.bind(chatController));
+router.post('/group/:groupId/topics', authenticate, chatValidators.createGroupTopic, chatController.createGroupTopic.bind(chatController));
 
 module.exports = router;
 

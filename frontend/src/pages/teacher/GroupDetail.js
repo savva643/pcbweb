@@ -23,6 +23,10 @@ import {
   TableHead,
   TableRow,
   Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   Add,
@@ -38,6 +42,8 @@ import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import GroupChat from '../../components/GroupChat';
 import GradesTable from '../../components/GradesTable';
+import GroupStats from '../../components/GroupStats';
+import GradesTableByRelated from '../../components/GradesTableByRelated';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -61,6 +67,10 @@ const GroupDetail = () => {
     dueDate: '',
     maxScore: 100
   });
+  const [gradesView, setGradesView] = useState('monthly'); // 'monthly', 'course', 'homework', 'test'
+  const [selectedRelatedId, setSelectedRelatedId] = useState(null);
+  const [selectedRelatedType, setSelectedRelatedType] = useState(null);
+  const [selectedRelatedTitle, setSelectedRelatedTitle] = useState('');
 
   useEffect(() => {
     fetchGroupDetails();
@@ -336,28 +346,78 @@ const GroupDetail = () => {
 
       {tabValue === 4 && (
         <Box>
-          <Typography variant="h6" sx={{ mb: 2 }}>Успеваемость группы</Typography>
-          <GradesTable groupId={id} isTeacher={true} />
+          <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Typography variant="h6">Успеваемость группы</Typography>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Вид успеваемости</InputLabel>
+              <Select
+                value={gradesView}
+                label="Вид успеваемости"
+                onChange={(e) => {
+                  setGradesView(e.target.value);
+                  setSelectedRelatedId(null);
+                }}
+              >
+                <MenuItem value="monthly">По месяцам</MenuItem>
+                <MenuItem value="course">По курсу</MenuItem>
+                <MenuItem value="homework">По ДЗ</MenuItem>
+                <MenuItem value="test">По тесту</MenuItem>
+              </Select>
+            </FormControl>
+            {gradesView !== 'monthly' && (
+              <FormControl size="small" sx={{ minWidth: 300 }}>
+                <InputLabel>
+                  {gradesView === 'course' ? 'Курс' : gradesView === 'homework' ? 'ДЗ' : 'Тест'}
+                </InputLabel>
+                <Select
+                  value={selectedRelatedId || ''}
+                  label={gradesView === 'course' ? 'Курс' : gradesView === 'homework' ? 'ДЗ' : 'Тест'}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSelectedRelatedId(value);
+                    if (gradesView === 'course') {
+                      const course = group.courseAssignments?.find(c => c.courseId === value);
+                      setSelectedRelatedTitle(course?.course?.title || '');
+                      setSelectedRelatedType('COURSE');
+                    } else if (gradesView === 'homework') {
+                      const homework = group.homeworks?.find(h => h.id === value);
+                      setSelectedRelatedTitle(homework?.title || '');
+                      setSelectedRelatedType('HOMEWORK');
+                    }
+                  }}
+                >
+                  {gradesView === 'course' && group.courseAssignments?.map((assignment) => (
+                    <MenuItem key={assignment.courseId} value={assignment.courseId}>
+                      {assignment.course.title}
+                    </MenuItem>
+                  ))}
+                  {gradesView === 'homework' && group.homeworks?.map((homework) => (
+                    <MenuItem key={homework.id} value={homework.id}>
+                      {homework.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
+          {gradesView === 'monthly' ? (
+            <GradesTable groupId={id} isTeacher={true} />
+          ) : selectedRelatedId ? (
+            <GradesTableByRelated
+              groupId={id}
+              gradeType={selectedRelatedType}
+              relatedId={selectedRelatedId}
+              relatedTitle={selectedRelatedTitle}
+            />
+          ) : (
+            <Alert severity="info">Выберите {gradesView === 'course' ? 'курс' : 'ДЗ'}</Alert>
+          )}
         </Box>
       )}
 
       {tabValue === 5 && (
         <Box>
-          <Button
-            variant="contained"
-            onClick={async () => {
-              try {
-                const response = await axios.get(`${API_URL}/groups/${id}/stats`);
-                console.log('Group stats:', response.data);
-                // Здесь можно отобразить статистику
-                alert('Статистика загружена. Проверьте консоль.');
-              } catch (error) {
-                setError('Не удалось загрузить статистику');
-              }
-            }}
-          >
-            Загрузить статистику
-          </Button>
+          <GroupStats groupId={id} />
         </Box>
       )}
 

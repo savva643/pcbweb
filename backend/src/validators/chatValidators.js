@@ -8,6 +8,27 @@ const chatValidators = {
    * Валидация создания темы
    */
   createTopic: [
+    body('title')
+      .trim()
+      .notEmpty()
+      .withMessage('Title is required')
+      .isLength({ min: 1, max: 200 })
+      .withMessage('Title must be between 1 and 200 characters'),
+    body('description')
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage('Description must not exceed 1000 characters'),
+    body('isPrivate')
+      .optional()
+      .isBoolean()
+      .withMessage('isPrivate must be a boolean')
+  ],
+  
+  /**
+   * Валидация создания темы для курса
+   */
+  createCourseTopic: [
     param('courseId')
       .notEmpty()
       .withMessage('Course ID is required')
@@ -28,6 +49,28 @@ const chatValidators = {
       .optional()
       .isBoolean()
       .withMessage('isPrivate must be a boolean')
+  ],
+  
+  /**
+   * Валидация создания темы для группы
+   */
+  createGroupTopic: [
+    param('groupId')
+      .notEmpty()
+      .withMessage('Group ID is required')
+      .isUUID()
+      .withMessage('Invalid group ID format'),
+    body('title')
+      .trim()
+      .notEmpty()
+      .withMessage('Title is required')
+      .isLength({ min: 1, max: 200 })
+      .withMessage('Title must be between 1 and 200 characters'),
+    body('description')
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage('Description must not exceed 1000 characters')
   ],
 
   /**

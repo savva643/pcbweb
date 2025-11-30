@@ -42,6 +42,59 @@ class HomeworkService {
   }
 
   /**
+   * Нормализовать дату в ISO-8601 формат для Prisma
+   * @param {string|null} dateString - Дата в формате datetime-local или ISO
+   * @returns {Date|null}
+   */
+  normalizeDate(dateString) {
+    if (!dateString) return null;
+    
+    try {
+      // Если дата уже в правильном формате ISO-8601 с Z или +, используем как есть
+      if (dateString.includes('Z') || (dateString.includes('+') && dateString.length > 19)) {
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      }
+      
+      // Если дата в формате datetime-local (YYYY-MM-DDTHH:mm или YYYY-MM-DDTHH:mm:ss)
+      if (dateString.includes('T')) {
+        // Добавляем секунды если их нет
+        let normalized = dateString;
+        const parts = normalized.split('T');
+        if (parts.length === 2) {
+          const timePart = parts[1];
+          const timeParts = timePart.split(':');
+          if (timeParts.length === 2) {
+            // Добавляем секунды
+            normalized = parts[0] + 'T' + timePart + ':00';
+          }
+        }
+        
+        // Создаем Date объект из локального времени
+        // Prisma принимает Date объекты и преобразует их в ISO-8601
+        const date = new Date(normalized);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      }
+      
+      // Пробуем создать Date из строки
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+      
+      console.warn('Invalid date format:', dateString);
+      return null;
+    } catch (error) {
+      console.error('Error normalizing date:', dateString, error);
+      return null;
+    }
+  }
+
+  /**
    * Создать домашнее задание
    * @param {string} groupId - ID группы
    * @param {string} teacherId - ID преподавателя
@@ -56,6 +109,7 @@ class HomeworkService {
 
     return homeworkRepository.create({
       ...data,
+      dueDate: this.normalizeDate(data.dueDate),
       groupId
     });
   }
@@ -78,7 +132,12 @@ class HomeworkService {
       throw new Error('Access denied');
     }
 
-    return homeworkRepository.update(homeworkId, data);
+    const updateData = { ...data };
+    if (updateData.dueDate !== undefined) {
+      updateData.dueDate = this.normalizeDate(updateData.dueDate);
+    }
+
+    return homeworkRepository.update(homeworkId, updateData);
   }
 
   /**

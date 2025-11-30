@@ -50,10 +50,32 @@ class HomeworkController {
       }
 
       const { groupId, title, description, dueDate, maxScore } = req.body;
+      
+      // Нормализуем дату перед передачей в сервис
+      let normalizedDueDate = null;
+      if (dueDate) {
+        // Если дата в формате datetime-local (YYYY-MM-DDTHH:mm), добавляем секунды
+        if (dueDate.includes('T') && !dueDate.includes('Z') && !dueDate.includes('+')) {
+          const parts = dueDate.split('T');
+          if (parts.length === 2) {
+            const timePart = parts[1];
+            if (timePart.split(':').length === 2) {
+              normalizedDueDate = dueDate + ':00';
+            } else {
+              normalizedDueDate = dueDate;
+            }
+          } else {
+            normalizedDueDate = dueDate;
+          }
+        } else {
+          normalizedDueDate = dueDate;
+        }
+      }
+      
       const homework = await homeworkService.createHomework(groupId, req.user.id, {
         title,
         description,
-        dueDate: dueDate || null,
+        dueDate: normalizedDueDate,
         maxScore: maxScore || 100
       });
       res.status(201).json(homework);
