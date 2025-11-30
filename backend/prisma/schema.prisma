@@ -305,15 +305,18 @@ model TestAttempt {
   id          String   @id @default(uuid())
   testId      String
   studentId   String
-  score       Int?
+  score       Int      @default(0)
   maxScore    Int
+  teacherScore Int?    // Оценка, выставленная преподавателем вручную
+  teacherFeedback String? // Комментарий преподавателя
   startedAt   DateTime @default(now())
   completedAt DateTime?
   answers     TestAttemptAnswer[]
 
   // Relations
-  test    Test  @relation(fields: [testId], references: [id], onDelete: Cascade)
-  student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  test    Test              @relation(fields: [testId], references: [id], onDelete: Cascade)
+  student User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  comments TestAttemptComment[]
 
   @@map("test_attempts")
 }
