@@ -35,16 +35,16 @@ class TestService {
   }
 
   /**
-   * Получить тесты курса
-   * @param {string} courseId - ID курса
+   * Получить тесты группы
+   * @param {string} groupId - ID группы
    * @param {string} userId - ID пользователя
    * @param {string} userRole - Роль пользователя
    * @returns {Promise<Array>} Список тестов
    */
-  async getCourseTests(courseId, userId, userRole) {
-    await this.checkCourseAccess(courseId, userId, userRole);
+  async getGroupTests(groupId, userId, userRole) {
+    await this.checkGroupAccess(groupId, userId, userRole);
 
-    const tests = await testRepository.findByCourse(courseId);
+    const tests = await testRepository.findByGroup(groupId);
 
     // Для студентов добавляем статус попытки
     if (userRole === 'STUDENT') {
@@ -101,14 +101,50 @@ class TestService {
   }
 
   /**
+   * Проверка доступа к группе
+   * @param {string} groupId - ID группы
+   * @param {string} userId - ID пользователя
+   * @param {string} userRole - Роль пользователя
+   * @returns {Promise<object>} Группа
+   * @throws {Error} Если доступ запрещен
+   */
+  async checkGroupAccess(groupId, userId, userRole) {
+    const groupRepository = require('../repositories/groupRepository');
+    const group = await groupRepository.findById(groupId);
+
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    if (userRole === 'STUDENT') {
+      const prisma = require('../config/database');
+      const membership = await prisma.groupMember.findUnique({
+        where: {
+          groupId_studentId: {
+            groupId,
+            studentId: userId
+          }
+        }
+      });
+      if (!membership) {
+        throw new Error('Access denied');
+      }
+    } else if (userRole === 'TEACHER' && group.teacherId !== userId) {
+      throw new Error('Access denied');
+    }
+
+    return group;
+  }
+
+  /**
    * Создать тест
-   * @param {string} courseId - ID курса
+   * @param {string} groupId - ID группы
    * @param {string} teacherId - ID преподавателя
    * @param {object} data - Данные теста
    * @returns {Promise<object>} Созданный тест
    */
-  async createTest(courseId, teacherId, data) {
-    await this.checkCourseAccess(courseId, teacherId, 'TEACHER');
+  async createTest(groupId, teacherId, data) {
+    await this.checkGroupAccess(groupId, teacherId, 'TEACHER');
 
     // Преобразуем autoGrade в boolean
     let autoGrade = false;
@@ -123,7 +159,7 @@ class TestService {
     }
 
     return testRepository.create({
-      courseId,
+      groupId,
       title: data.title,
       description: data.description,
       maxScore: data.maxScore ? parseInt(data.maxScore) : 100,
@@ -148,7 +184,12 @@ class TestService {
     const test = await prisma.test.findUnique({
       where: { id: testId },
       include: {
-        course: true
+        group: {
+          select: {
+            id: true,
+            teacherId: true
+          }
+        }
       }
     });
 
@@ -156,7 +197,7 @@ class TestService {
       throw new Error('Test not found');
     }
 
-    if (!test.course || test.course.teacherId !== teacherId) {
+    if (!test.group || test.group.teacherId !== teacherId) {
       throw new Error('Access denied');
     }
 
@@ -427,7 +468,18 @@ class TestService {
     const test = await prisma.test.findUnique({
       where: { id: testId },
       include: {
-        course: true
+        course: {
+          select: {
+            id: true,
+            teacherId: true
+          }
+        },
+        group: {
+          select: {
+            id: true,
+            teacherId: true
+          }
+        }
       }
     });
 
@@ -435,7 +487,11 @@ class TestService {
       throw new Error('Test not found');
     }
 
-    if (!test.course || test.course.teacherId !== teacherId) {
+    // Проверяем доступ через курс или группу
+    const hasAccess = (test.course && test.course.teacherId === teacherId) || 
+                      (test.group && test.group.teacherId === teacherId);
+    
+    if (!hasAccess) {
       throw new Error('Access denied');
     }
 

@@ -230,7 +230,7 @@ const CourseDetail = () => {
                       </Box>
                     )}
                     {/* Отображение файловых материалов (video, image, scorm, file) */}
-                    {material.contentUrl && (
+                    {material.contentUrl && material.type !== 'text' && material.type !== 'markdown' && material.type !== 'wiki' && (
                       <Box sx={{ mt: 2 }}>
                         {material.type === 'video' ? (
                           <video controls width="100%" style={{ maxHeight: '600px', borderRadius: '8px' }}>
@@ -255,7 +255,7 @@ const CourseDetail = () => {
                               title={material.title}
                             />
                           </Box>
-                        ) : material.type !== 'text' && material.type !== 'markdown' && material.type !== 'wiki' ? (
+                        ) : (
                           <Button
                             variant="outlined"
                             href={`${API_URL.replace('/api', '')}${material.contentUrl}`}
@@ -264,7 +264,15 @@ const CourseDetail = () => {
                           >
                             Скачать файл
                           </Button>
-                        ) : null}
+                        )}
+                      </Box>
+                    )}
+                    {/* Если есть contentUrl для текстовых типов, но нет content - загружаем и показываем */}
+                    {material.contentUrl && (material.type === 'text' || material.type === 'markdown' || material.type === 'wiki') && !material.content && (
+                      <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Загрузка содержимого...
+                        </Typography>
                       </Box>
                     )}
                     {material.assignment && (

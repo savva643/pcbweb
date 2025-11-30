@@ -85,7 +85,6 @@ model Course {
   materials     Material[]
   assignments   Assignment[]
   progress      Progress[]
-  tests         Test[]
   chatTopics    ChatTopic[]
   groupAssignments GroupCourseAssignment[]
 
@@ -251,7 +250,7 @@ model SubmissionVersion {
 // Тесты
 model Test {
   id          String   @id @default(uuid())
-  courseId    String
+  groupId     String   // Тесты теперь в группах
   title       String
   description String?
   maxScore    Int      @default(100)
@@ -264,7 +263,7 @@ model Test {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  course     Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
   questions   Question[]
   attempts   TestAttempt[]
 
@@ -369,6 +368,7 @@ model Group {
   courseAssignments GroupCourseAssignment[]
   chatTopics    ChatTopic[]
   gradeRecords  StudentGradeRecord[]
+  tests         Test[]
 
   @@map("groups")
 }

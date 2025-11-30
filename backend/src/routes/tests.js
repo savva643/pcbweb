@@ -7,15 +7,15 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/tests/course/{courseId}:
+ * /api/tests/group/{groupId}:
  *   get:
- *     summary: Получить тесты курса
+ *     summary: Получить тесты группы
  *     tags: [Tests]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: courseId
+ *         name: groupId
  *         required: true
  *         schema:
  *           type: string
@@ -24,7 +24,7 @@ const router = express.Router();
  *       200:
  *         description: Список тестов
  */
-router.get('/course/:courseId', authenticate, testController.getCourseTests);
+router.get('/group/:groupId', authenticate, testController.getGroupTests);
 
 /**
  * @swagger

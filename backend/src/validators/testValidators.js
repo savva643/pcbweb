@@ -5,11 +5,11 @@ const { body, param } = require('express-validator');
  */
 const testValidators = {
   create: [
-    body('courseId')
+    body('groupId')
       .notEmpty()
-      .withMessage('Course ID is required')
+      .withMessage('Group ID is required')
       .isUUID()
-      .withMessage('Invalid course ID format'),
+      .withMessage('Invalid group ID format'),
     body('title')
       .trim()
       .notEmpty()

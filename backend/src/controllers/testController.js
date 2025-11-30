@@ -7,17 +7,17 @@ const { validationResult } = require('express-validator');
  */
 class TestController {
   /**
-   * Получить тесты курса
-   * @route GET /api/tests/course/:courseId
+   * Получить тесты группы
+   * @route GET /api/tests/group/:groupId
    */
-  async getCourseTests(req, res) {
+  async getGroupTests(req, res) {
     try {
-      const { courseId } = req.params;
-      const tests = await testService.getCourseTests(courseId, req.user.id, req.user.role);
+      const { groupId } = req.params;
+      const tests = await testService.getGroupTests(groupId, req.user.id, req.user.role);
       res.json(tests);
     } catch (error) {
       console.error('Get tests error:', error);
-      if (error.message === 'Course not found' || error.message === 'Access denied') {
+      if (error.message === 'Group not found' || error.message === 'Access denied') {
         return res.status(403).json({ error: error.message });
       }
       res.status(500).json({ error: 'Failed to fetch tests' });
@@ -55,7 +55,7 @@ class TestController {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const test = await testService.createTest(req.body.courseId, req.user.id, req.body);
+      const test = await testService.createTest(req.body.groupId, req.user.id, req.body);
       res.status(201).json(test);
     } catch (error) {
       console.error('Create test error:', error);

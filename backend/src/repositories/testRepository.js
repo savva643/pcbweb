@@ -12,13 +12,13 @@ class TestRepository extends BaseRepository {
   }
 
   /**
-   * Получить тесты курса
-   * @param {string} courseId - ID курса
+   * Получить тесты группы
+   * @param {string} groupId - ID группы
    * @returns {Promise<Array>}
    */
-  async findByCourse(courseId) {
+  async findByGroup(groupId) {
     return prisma.test.findMany({
-      where: { courseId },
+      where: { groupId },
       include: {
         _count: {
           select: {
