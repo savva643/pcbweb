@@ -26,8 +26,7 @@ const homeworkValidators = {
     body('maxScore').optional().isInt({ min: 1 }).withMessage('Max score must be a positive integer')
   ],
   submitHomework: [
-    param('id').isUUID().withMessage('Invalid homework ID'),
-    body('fileUrl').optional().trim().withMessage('File URL must be a string')
+    param('id').isUUID().withMessage('Invalid homework ID')
   ],
   gradeHomework: [
     param('id').isUUID().withMessage('Invalid submission ID'),
