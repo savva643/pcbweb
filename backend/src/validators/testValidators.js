@@ -79,9 +79,9 @@ const testValidators = {
     body('answers')
       .optional()
       .custom((value, { req }) => {
-        // Для text_input answers может быть пустым или отсутствовать
+        // Для text_input answers может быть пустым массивом или отсутствовать
         if (req.body.type === 'text_input') {
-          if (value && !Array.isArray(value)) {
+          if (value !== undefined && value !== null && !Array.isArray(value)) {
             throw new Error('Answers must be an array');
           }
           return true;
@@ -94,17 +94,40 @@ const testValidators = {
       }),
     body('answers.*.text')
       .optional()
-      .trim()
-      .notEmpty()
-      .withMessage('Answer text is required'),
+      .custom((value) => {
+        // Если значение есть, оно должно быть непустой строкой
+        if (value !== undefined && value !== null) {
+          if (typeof value !== 'string' || value.trim().length === 0) {
+            throw new Error('Answer text is required and cannot be empty');
+          }
+        }
+        return true;
+      }),
     body('answers.*.isCorrect')
       .optional()
-      .isBoolean()
-      .withMessage('isCorrect must be a boolean'),
+      .custom((value) => {
+        if (value === undefined || value === null) {
+          return true;
+        }
+        if (typeof value === 'boolean') {
+          return true;
+        }
+        if (value === 'true' || value === 'false' || value === '1' || value === '0') {
+          return true;
+        }
+        throw new Error('isCorrect must be a boolean');
+      }),
     body('answers.*.matchKey')
-      .optional()
-      .isString()
-      .withMessage('Match key must be a string'),
+      .optional({ nullable: true })
+      .custom((value) => {
+        if (value === null || value === undefined || value === '') {
+          return true;
+        }
+        if (typeof value === 'string') {
+          return true;
+        }
+        throw new Error('Match key must be a string');
+      }),
     body('order')
       .optional()
       .isInt({ min: 0 })

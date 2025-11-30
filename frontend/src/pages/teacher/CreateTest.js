@@ -212,17 +212,34 @@ const CreateTest = () => {
 
       // Добавляем вопросы
       for (const question of questions) {
-        await axios.post(`${API_URL}/tests/${testId}/questions`, {
+        const questionData = {
           type: question.type,
           question: question.question,
           points: question.points,
-          answers: question.answers.map(a => ({
+        };
+
+        // Для text_input answers может быть пустым, для остальных обязателен
+        if (question.type === 'text_input') {
+          if (question.answers && question.answers.length > 0) {
+            questionData.answers = question.answers.map(a => ({
+              text: a.text,
+              isCorrect: a.isCorrect || true,
+              order: a.order,
+              matchKey: null,
+            }));
+          } else {
+            questionData.answers = [];
+          }
+        } else {
+          questionData.answers = question.answers.map(a => ({
             text: a.text,
             isCorrect: a.isCorrect,
             order: a.order,
             matchKey: a.matchKey || null,
-          })),
-        });
+          }));
+        }
+
+        await axios.post(`${API_URL}/tests/${testId}/questions`, questionData);
       }
 
       navigate(`/teacher/course/${courseId}`);
