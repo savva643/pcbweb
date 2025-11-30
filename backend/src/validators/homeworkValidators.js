@@ -14,7 +14,19 @@ const homeworkValidators = {
     body('instructions').optional().trim(),
     body('requirements').optional().trim(),
     body('resources').optional().trim(),
-    body('dueDate').optional().isISO8601().withMessage('Invalid date format'),
+    body('dueDate')
+      .optional({ nullable: true, checkFalsy: true })
+      .custom((value) => {
+        if (value === null || value === undefined || value === '') {
+          return true;
+        }
+        // Проверка ISO8601 формата
+        const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+        if (!iso8601Regex.test(value) && isNaN(Date.parse(value))) {
+          throw new Error('Invalid date format');
+        }
+        return true;
+      }),
     body('maxScore').optional().isInt({ min: 1 }).withMessage('Max score must be a positive integer'),
     body('difficulty').optional().isIn(['LOW', 'MEDIUM', 'HIGH']).withMessage('Difficulty must be one of: LOW, MEDIUM, HIGH')
   ],

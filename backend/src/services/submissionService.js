@@ -89,9 +89,16 @@ class SubmissionService {
    * @returns {Promise<object>} Оценка
    */
   async gradeSubmission(submissionId, teacherId, data) {
-    const submission = await submissionRepository.findById(submissionId, {
-      assignment: {
-        course: true
+    const prisma = require('../config/database');
+    
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: {
+        assignment: {
+          include: {
+            course: true
+          }
+        }
       }
     });
 

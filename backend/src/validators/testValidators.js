@@ -26,13 +26,31 @@ const testValidators = {
       .isInt({ min: 1 })
       .withMessage('Max score must be a positive integer'),
     body('timeLimit')
-      .optional()
-      .isInt({ min: 1 })
-      .withMessage('Time limit must be a positive integer (in minutes)'),
+      .optional({ nullable: true, checkFalsy: true })
+      .custom((value) => {
+        if (value === null || value === undefined || value === '') {
+          return true;
+        }
+        const num = parseInt(value);
+        if (isNaN(num) || num < 1) {
+          throw new Error('Time limit must be a positive integer (in minutes)');
+        }
+        return true;
+      }),
     body('autoGrade')
       .optional()
-      .isBoolean()
-      .withMessage('Auto grade must be a boolean'),
+      .custom((value) => {
+        if (value === undefined || value === null) {
+          return true;
+        }
+        if (typeof value === 'boolean') {
+          return true;
+        }
+        if (value === 'true' || value === 'false' || value === '1' || value === '0') {
+          return true;
+        }
+        throw new Error('Auto grade must be a boolean');
+      }),
     body('difficulty')
       .optional()
       .isIn(['LOW', 'MEDIUM', 'HIGH'])

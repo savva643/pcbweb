@@ -110,13 +110,25 @@ class TestService {
   async createTest(courseId, teacherId, data) {
     await this.checkCourseAccess(courseId, teacherId, 'TEACHER');
 
+    // Преобразуем autoGrade в boolean
+    let autoGrade = false;
+    if (data.autoGrade !== undefined && data.autoGrade !== null) {
+      if (typeof data.autoGrade === 'boolean') {
+        autoGrade = data.autoGrade;
+      } else if (data.autoGrade === 'true' || data.autoGrade === '1') {
+        autoGrade = true;
+      } else if (data.autoGrade === 'false' || data.autoGrade === '0') {
+        autoGrade = false;
+      }
+    }
+
     return testRepository.create({
       courseId,
       title: data.title,
       description: data.description,
       maxScore: data.maxScore ? parseInt(data.maxScore) : 100,
       timeLimit: data.timeLimit ? parseInt(data.timeLimit) : null,
-      autoGrade: data.autoGrade !== undefined ? Boolean(data.autoGrade) : false,
+      autoGrade: autoGrade,
       difficulty: data.difficulty || 'MEDIUM'
     }, {
       questions: true

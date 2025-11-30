@@ -50,6 +50,8 @@ class TestController {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.error('Create test validation errors:', errors.array());
+        console.error('Request body:', req.body);
         return res.status(400).json({ errors: errors.array() });
       }
 
