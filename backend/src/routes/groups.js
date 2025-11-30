@@ -130,11 +130,70 @@ router.get('/:id/stats', authenticate, requireRole('TEACHER'), groupValidators.g
 const gradeRecordController = require('../controllers/gradeRecordController');
 const gradeRecordValidators = require('../validators/gradeRecordValidators');
 
+/**
+ * @swagger
+ * /api/groups/{groupId}/grades:
+ *   get:
+ *     summary: Получить успеваемость всех студентов группы
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:groupId/grades', authenticate, requireRole('TEACHER'), gradeRecordValidators.groupId, gradeRecordValidators.yearMonth, gradeRecordController.getGroupGrades);
+
+/**
+ * @swagger
+ * /api/groups/{groupId}/students/{studentId}/grades:
+ *   get:
+ *     summary: Получить успеваемость студента в группе
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:groupId/students/:studentId/grades', authenticate, gradeRecordValidators.groupId, gradeRecordValidators.studentId, gradeRecordValidators.yearMonth, gradeRecordController.getStudentGrades);
+
+/**
+ * @swagger
+ * /api/groups/{groupId}/grades/{gradeType}/{relatedId}:
+ *   get:
+ *     summary: Получить успеваемость по курсу/ДЗ/тесту
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:groupId/grades/:gradeType/:relatedId', authenticate, requireRole('TEACHER'), gradeRecordValidators.groupId, gradeRecordValidators.gradeType, gradeRecordController.getGradesByRelated);
+
+/**
+ * @swagger
+ * /api/groups/{groupId}/grades:
+ *   post:
+ *     summary: Создать или обновить запись успеваемости
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/:groupId/grades', authenticate, requireRole('TEACHER'), gradeRecordValidators.groupId, gradeRecordValidators.upsertGradeRecord, gradeRecordController.upsertGradeRecord);
+
+/**
+ * @swagger
+ * /api/groups/{groupId}/grades/{recordId}:
+ *   delete:
+ *     summary: Удалить запись успеваемости
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/:groupId/grades/:recordId', authenticate, requireRole('TEACHER'), gradeRecordValidators.groupId, gradeRecordValidators.recordId, gradeRecordController.deleteGradeRecord);
+
+/**
+ * @swagger
+ * /api/groups/{groupId}/students/{studentId}/stats:
+ *   get:
+ *     summary: Получить статистику студента в группе
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:groupId/students/:studentId/stats', authenticate, gradeRecordValidators.groupId, gradeRecordValidators.studentId, gradeRecordController.getStudentStats);
 
 module.exports = router;

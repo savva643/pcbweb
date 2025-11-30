@@ -22,6 +22,7 @@ import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import GroupChat from '../../components/GroupChat';
 import GradesTable from '../../components/GradesTable';
+import { useMediaQuery, useTheme } from '@mui/material';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -29,6 +30,8 @@ const StudentGroupDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -64,16 +67,29 @@ const StudentGroupDetail = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4">{group.name}</Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 2, sm: 3 },
+        gap: { xs: 2, sm: 0 }
+      }}>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+            {group.name}
+          </Typography>
           {group.description && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {group.description}
             </Typography>
           )}
         </Box>
-        <Button variant="outlined" onClick={() => navigate('/groups')}>
+        <Button 
+          variant="outlined" 
+          onClick={() => navigate('/groups')}
+          size={isMobile ? 'small' : 'medium'}
+        >
           ← Назад
         </Button>
       </Box>
@@ -84,11 +100,20 @@ const StudentGroupDetail = () => {
         </Alert>
       )}
 
-      <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
-        <Tab icon={<Book />} label="Курсы" />
-        <Tab icon={<Assignment />} label="Домашние задания" />
-        <Tab icon={<Chat />} label="Чат" />
-        <Tab icon={<BarChart />} label="Моя успеваемость" />
+      <Tabs 
+        value={tabValue} 
+        onChange={(e, newValue) => setTabValue(newValue)} 
+        sx={{ mb: 2 }}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+      >
+        <Tab icon={<Book />} label="Курсы" iconPosition="start" />
+        <Tab icon={<Assignment />} label="ДЗ" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
+        <Tab icon={<Assignment />} label="ДЗ" iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
+        <Tab icon={<Chat />} label="Чат" iconPosition="start" />
+        <Tab icon={<BarChart />} label="Успеваемость" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
+        <Tab icon={<BarChart />} label="Успев." iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
       </Tabs>
 
       {tabValue === 0 && (
@@ -96,7 +121,15 @@ const StudentGroupDetail = () => {
           <Typography variant="h6" sx={{ mb: 2 }}>
             Курсы ({group.courseAssignments?.length || 0})
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(auto-fill, minmax(250px, 1fr))',
+              md: 'repeat(auto-fill, minmax(300px, 1fr))' 
+            }, 
+            gap: 2 
+          }}>
             {group.courseAssignments?.map((assignment) => (
               <Card
                 key={assignment.id}
@@ -122,7 +155,15 @@ const StudentGroupDetail = () => {
           <Typography variant="h6" sx={{ mb: 2 }}>
             Домашние задания ({group.homeworks?.length || 0})
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(auto-fill, minmax(250px, 1fr))',
+              md: 'repeat(auto-fill, minmax(300px, 1fr))' 
+            }, 
+            gap: 2 
+          }}>
             {group.homeworks?.map((homework) => (
               <Card
                 key={homework.id}

@@ -109,10 +109,24 @@ const GroupChat = ({ groupId, user }) => {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '600px' }}>
-      <Box sx={{ width: 300, borderRight: 1, borderColor: 'divider', overflow: 'auto' }}>
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">Темы</Typography>
+    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, height: { xs: 'auto', sm: '600px' }, minHeight: { xs: '500px', sm: '600px' } }}>
+      <Box sx={{ 
+        width: { xs: '100%', sm: 300 }, 
+        height: { xs: '200px', sm: 'auto' },
+        borderRight: { xs: 0, sm: 1 }, 
+        borderBottom: { xs: 1, sm: 0 },
+        borderColor: 'divider', 
+        overflow: 'auto' 
+      }}>
+        <Box sx={{ 
+          p: { xs: 1, sm: 2 }, 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center' 
+        }}>
+          <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1.25rem' } }}>
+            Темы
+          </Typography>
           <IconButton size="small" onClick={() => setTopicDialogOpen(true)}>
             <Add />
           </IconButton>
@@ -138,18 +152,20 @@ const GroupChat = ({ groupId, user }) => {
           ))}
         </List>
       </Box>
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: { xs: '400px', sm: 'auto' } }}>
         {selectedTopic ? (
           <>
-            <Paper sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-              <Typography variant="h6">{selectedTopic.title}</Typography>
+            <Paper sx={{ p: { xs: 1, sm: 2 }, borderBottom: 1, borderColor: 'divider' }}>
+              <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1.25rem' } }}>
+                {selectedTopic.title}
+              </Typography>
               {selectedTopic.description && (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                   {selectedTopic.description}
                 </Typography>
               )}
             </Paper>
-            <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+            <Box sx={{ flex: 1, overflow: 'auto', p: { xs: 1, sm: 2 } }}>
               {messages.map((message) => (
                 <Box
                   key={message.id}
@@ -171,8 +187,10 @@ const GroupChat = ({ groupId, user }) => {
                     <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
                       {message.author.firstName} {message.author.lastName}
                     </Typography>
-                    <Typography variant="body1">{message.content}</Typography>
-                    <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.7 }}>
+                    <Typography variant="body1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                      {message.content}
+                    </Typography>
+                    <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.7, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
                       {new Date(message.createdAt).toLocaleString('ru-RU')}
                     </Typography>
                   </Box>
@@ -180,7 +198,13 @@ const GroupChat = ({ groupId, user }) => {
               ))}
               <div ref={messagesEndRef} />
             </Box>
-            <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
+            <Box sx={{ 
+              p: { xs: 1, sm: 2 }, 
+              borderTop: 1, 
+              borderColor: 'divider', 
+              display: 'flex', 
+              gap: 1 
+            }}>
               <TextField
                 fullWidth
                 size="small"
@@ -193,8 +217,9 @@ const GroupChat = ({ groupId, user }) => {
                     handleSendMessage();
                   }
                 }}
+                sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
               />
-              <Button variant="contained" onClick={handleSendMessage}>
+              <Button variant="contained" onClick={handleSendMessage} sx={{ minWidth: { xs: 48, sm: 64 } }}>
                 <Send />
               </Button>
             </Box>

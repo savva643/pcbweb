@@ -82,6 +82,15 @@ router.post('/:id/submit', authenticate, requireRole('STUDENT'), homeworkValidat
  */
 router.post('/submissions/:id/grade', authenticate, requireRole('TEACHER'), homeworkValidators.gradeHomework, homeworkController.gradeHomework);
 
+/**
+ * @swagger
+ * /api/homeworks/{id}/active:
+ *   put:
+ *     summary: Закрыть/открыть домашнее задание
+ *     tags: [Homeworks]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id/active', authenticate, requireRole('TEACHER'), homeworkValidators.homeworkId, homeworkController.setHomeworkActive);
 
 module.exports = router;

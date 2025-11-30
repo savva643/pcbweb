@@ -70,7 +70,7 @@ const MyCourses = () => {
 
   return (
     <Box className="page-enter">
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
         Мои курсы
       </Typography>
       <Grid container spacing={3} sx={{ mt: 1 }}>

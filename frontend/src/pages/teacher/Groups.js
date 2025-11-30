@@ -38,6 +38,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 const Groups = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -133,12 +135,23 @@ const Groups = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Группы</Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 2, sm: 3 },
+        gap: { xs: 2, sm: 0 }
+      }}>
+        <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+          Группы
+        </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => setCreateDialogOpen(true)}
+          size={isMobile ? 'small' : 'medium'}
+          fullWidth={isMobile}
         >
           Создать группу
         </Button>
@@ -153,7 +166,15 @@ const Groups = () => {
       {groups.length === 0 ? (
         <Alert severity="info">Группы пока не созданы</Alert>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { 
+            xs: '1fr', 
+            sm: 'repeat(auto-fill, minmax(250px, 1fr))',
+            md: 'repeat(auto-fill, minmax(300px, 1fr))' 
+          }, 
+          gap: 2 
+        }}>
           {groups.map((group) => (
             <Card key={group.id} sx={{ cursor: 'pointer' }} onClick={() => navigate(`/teacher/group/${group.id}`)}>
               <CardContent>

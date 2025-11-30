@@ -29,6 +29,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMediaQuery, useTheme } from '@mui/material';
 import CourseChat from '../../components/CourseChat';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -37,6 +38,8 @@ const ManageCourse = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [course, setCourse] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -138,16 +141,37 @@ const ManageCourse = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">{course.title}</Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 2, sm: 3 },
+        gap: { xs: 2, sm: 0 }
+      }}>
+        <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+          {course.title}
+        </Typography>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 1, sm: 2 },
+          width: { xs: '100%', sm: 'auto' }
+        }}>
           <Button
             variant="contained"
             onClick={() => navigate(`/teacher/course/${id}/stats`)}
+            size={isMobile ? 'small' : 'medium'}
+            fullWidth={isMobile}
           >
             Статистика
           </Button>
-          <Button variant="outlined" onClick={() => navigate('/teacher')}>
+          <Button 
+            variant="outlined" 
+            onClick={() => navigate('/teacher')}
+            size={isMobile ? 'small' : 'medium'}
+            fullWidth={isMobile}
+          >
             ← Назад
           </Button>
         </Box>
@@ -159,7 +183,14 @@ const ManageCourse = () => {
         </Alert>
       )}
 
-      <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
+      <Tabs 
+        value={tabValue} 
+        onChange={(e, newValue) => setTabValue(newValue)} 
+        sx={{ mb: 2 }}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+      >
         <Tab label="Материалы" />
         <Tab label="Задания" />
         <Tab label="Чат" />

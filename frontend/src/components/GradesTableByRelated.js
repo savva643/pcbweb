@@ -140,14 +140,14 @@ const GradesTableByRelated = ({ groupId, gradeType, relatedId, relatedTitle, onU
       <Typography variant="h6" sx={{ mb: 2 }}>
         Успеваемость: {relatedTitle}
       </Typography>
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 500 }}>
           <TableHead>
             <TableRow>
-              <TableCell>Студент</TableCell>
-              <TableCell>Оценка</TableCell>
-              <TableCell>Статус</TableCell>
-              <TableCell align="right">Действия</TableCell>
+              <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Студент</TableCell>
+              <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Оценка</TableCell>
+              <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'table-cell' } }}>Статус</TableCell>
+              <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Действия</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -159,18 +159,23 @@ const GradesTableByRelated = ({ groupId, gradeType, relatedId, relatedTitle, onU
                 <TableCell>
                   {grade.score !== null ? `${grade.score}/${grade.maxScore}` : '-'}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {getStatusIcon(grade.status)}
-                    <Typography variant="body2">{getStatusLabel(grade.status)}</Typography>
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                      {getStatusLabel(grade.status)}
+                    </Typography>
                   </Box>
+                </TableCell>
+                <TableCell sx={{ display: { xs: 'table-cell', sm: 'none' } }}>
+                  {getStatusIcon(grade.status)}
                 </TableCell>
                 <TableCell align="right">
                   <IconButton size="small" onClick={() => handleEditClick(grade)}>
-                    <Edit />
+                    <Edit fontSize="small" />
                   </IconButton>
                   <IconButton size="small" color="error" onClick={() => handleDeleteGrade(grade.id)}>
-                    <Delete />
+                    <Delete fontSize="small" />
                   </IconButton>
                 </TableCell>
               </TableRow>

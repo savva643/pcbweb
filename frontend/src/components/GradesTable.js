@@ -165,8 +165,14 @@ const GradesTable = ({ groupId, studentId, isTeacher, onUpdate }) => {
 
   return (
     <Box>
-      <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+      <Box sx={{ 
+        mb: 2, 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        gap: 2, 
+        alignItems: { xs: 'stretch', sm: 'center' } 
+      }}>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 120 } }}>
           <InputLabel>Год</InputLabel>
           <Select
             value={year}
@@ -178,7 +184,7 @@ const GradesTable = ({ groupId, studentId, isTeacher, onUpdate }) => {
             ))}
           </Select>
         </FormControl>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 120 } }}>
           <InputLabel>Месяц</InputLabel>
           <Select
             value={month}
@@ -194,16 +200,16 @@ const GradesTable = ({ groupId, studentId, isTeacher, onUpdate }) => {
         </FormControl>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto', maxWidth: '100%' }}>
+        <Table sx={{ minWidth: 650 }} size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Дата</TableCell>
-              {!studentId && <TableCell>Студент</TableCell>}
-              <TableCell>Тип</TableCell>
-              <TableCell>Оценка</TableCell>
-              <TableCell>Статус</TableCell>
-              {isTeacher && <TableCell align="right">Действия</TableCell>}
+              <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Дата</TableCell>
+              {!studentId && <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Студент</TableCell>}
+              <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Тип</TableCell>
+              <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Оценка</TableCell>
+              <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'table-cell' } }}>Статус</TableCell>
+              {isTeacher && <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Действия</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -221,15 +227,24 @@ const GradesTable = ({ groupId, studentId, isTeacher, onUpdate }) => {
                     </TableCell>
                   )}
                   <TableCell>
-                    <Chip label={getGradeTypeLabel(grade.gradeType)} size="small" />
+                    <Chip 
+                      label={getGradeTypeLabel(grade.gradeType)} 
+                      size="small"
+                      sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                    />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     {grade.score !== null ? `${grade.score}/${grade.maxScore}` : '-'}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'table-cell', sm: 'none' } }}>
+                    {getStatusIcon(grade.status)}
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {getStatusIcon(grade.status)}
-                      <Typography variant="body2">{getStatusLabel(grade.status)}</Typography>
+                      <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                        {getStatusLabel(grade.status)}
+                      </Typography>
                     </Box>
                   </TableCell>
                   {isTeacher && (

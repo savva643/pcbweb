@@ -229,6 +229,15 @@ router.post('/:id/submit', authenticate, requireRole('STUDENT'), testValidators.
  */
 router.get('/:id/attempts/:attemptId', authenticate, testValidators.testId, testValidators.attemptId, testController.getAttemptResults);
 
+/**
+ * @swagger
+ * /api/tests/{id}/active:
+ *   put:
+ *     summary: Закрыть/открыть тест
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id/active', authenticate, requireRole('TEACHER'), testValidators.testId, testController.setTestActive);
 
 module.exports = router;

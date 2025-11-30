@@ -37,6 +37,7 @@ import {
   Chat,
   BarChart,
 } from '@mui/icons-material';
+import { useMediaQuery, useTheme } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
@@ -51,6 +52,8 @@ const GroupDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -175,16 +178,29 @@ const GroupDetail = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4">{group.name}</Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 2, sm: 3 },
+        gap: { xs: 2, sm: 0 }
+      }}>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+            {group.name}
+          </Typography>
           {group.description && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {group.description}
             </Typography>
           )}
         </Box>
-        <Button variant="outlined" onClick={() => navigate('/teacher/groups')}>
+        <Button 
+          variant="outlined" 
+          onClick={() => navigate('/teacher/groups')}
+          size={isMobile ? 'small' : 'medium'}
+        >
           ← Назад
         </Button>
       </Box>
@@ -195,28 +211,49 @@ const GroupDetail = () => {
         </Alert>
       )}
 
-      <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
-        <Tab icon={<PersonAdd />} label="Студенты" />
-        <Tab icon={<Book />} label="Курсы" />
-        <Tab icon={<Assignment />} label="Домашние задания" />
-        <Tab icon={<Chat />} label="Чат" />
-        <Tab icon={<BarChart />} label="Успеваемость" />
-        <Tab icon={<BarChart />} label="Статистика" />
+      <Tabs 
+        value={tabValue} 
+        onChange={(e, newValue) => setTabValue(newValue)} 
+        sx={{ mb: 2 }}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+      >
+        <Tab icon={<PersonAdd />} label="Студенты" iconPosition="start" />
+        <Tab icon={<Book />} label="Курсы" iconPosition="start" />
+        <Tab icon={<Assignment />} label="ДЗ" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
+        <Tab icon={<Assignment />} label="ДЗ" iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
+        <Tab icon={<Chat />} label="Чат" iconPosition="start" />
+        <Tab icon={<BarChart />} label="Успеваемость" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
+        <Tab icon={<BarChart />} label="Успев." iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
+        <Tab icon={<BarChart />} label="Статистика" iconPosition="start" sx={{ display: { xs: 'none', md: 'flex' } }} />
+        <Tab icon={<BarChart />} label="Стат." iconPosition="top" sx={{ display: { xs: 'flex', md: 'none' }, minWidth: 'auto' }} />
       </Tabs>
 
       {tabValue === 0 && (
         <Box>
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="h6">Студенты ({group.members?.length || 0})</Typography>
+          <Box sx={{ 
+            mb: 2, 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            gap: { xs: 2, sm: 0 },
+            alignItems: { xs: 'stretch', sm: 'center' }
+          }}>
+            <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+              Студенты ({group.members?.length || 0})
+            </Typography>
             <Button
               variant="contained"
               startIcon={<Add />}
               onClick={() => setAddStudentDialogOpen(true)}
+              size={isMobile ? 'small' : 'medium'}
+              fullWidth={isMobile}
             >
               Добавить студента
             </Button>
           </Box>
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -268,7 +305,15 @@ const GroupDetail = () => {
               Назначить курс
             </Button>
           </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(auto-fill, minmax(250px, 1fr))',
+              md: 'repeat(auto-fill, minmax(300px, 1fr))' 
+            }, 
+            gap: 2 
+          }}>
             {group.courseAssignments?.map((assignment) => (
               <Card key={assignment.id}>
                 <CardContent>
@@ -308,7 +353,15 @@ const GroupDetail = () => {
               Создать ДЗ
             </Button>
           </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(auto-fill, minmax(250px, 1fr))',
+              md: 'repeat(auto-fill, minmax(300px, 1fr))' 
+            }, 
+            gap: 2 
+          }}>
             {group.homeworks?.map((homework) => (
               <Card key={homework.id}>
                 <CardContent>
@@ -346,9 +399,17 @@ const GroupDetail = () => {
 
       {tabValue === 4 && (
         <Box>
-          <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Typography variant="h6">Успеваемость группы</Typography>
-            <FormControl size="small" sx={{ minWidth: 200 }}>
+          <Box sx={{ 
+            mb: 2, 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2, 
+            alignItems: { xs: 'stretch', sm: 'center' } 
+          }}>
+            <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+              Успеваемость группы
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 200 } }}>
               <InputLabel>Вид успеваемости</InputLabel>
               <Select
                 value={gradesView}
@@ -365,7 +426,7 @@ const GroupDetail = () => {
               </Select>
             </FormControl>
             {gradesView !== 'monthly' && (
-              <FormControl size="small" sx={{ minWidth: 300 }}>
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 300 } }}>
                 <InputLabel>
                   {gradesView === 'course' ? 'Курс' : gradesView === 'homework' ? 'ДЗ' : 'Тест'}
                 </InputLabel>

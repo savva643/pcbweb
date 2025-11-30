@@ -15,6 +15,8 @@ import {
   Paper,
   Chip,
   Button,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   BarChart,
@@ -27,6 +29,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const GroupStats = ({ groupId }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -66,14 +70,32 @@ const GroupStats = ({ groupId }) => {
 
   return (
     <Box>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5">Статистика группы</Typography>
-        <Button variant="outlined" onClick={fetchStats}>
+      <Box sx={{ 
+        mb: { xs: 2, sm: 3 }, 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 2, sm: 0 }
+      }}>
+        <Typography variant="h5" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+          Статистика группы
+        </Typography>
+        <Button variant="outlined" onClick={fetchStats} size={isMobile ? 'small' : 'medium'}>
           Обновить
         </Button>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 3 }}>
+      <Box sx={{ 
+        display: 'grid', 
+        gridTemplateColumns: { 
+          xs: '1fr', 
+          sm: 'repeat(auto-fit, minmax(150px, 1fr))',
+          md: 'repeat(auto-fit, minmax(200px, 1fr))' 
+        }, 
+        gap: 2, 
+        mb: { xs: 2, sm: 3 } 
+      }}>
         <Card>
           <CardContent>
             <Typography variant="h6" color="primary">
@@ -106,15 +128,15 @@ const GroupStats = ({ groupId }) => {
         </Card>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 600 }}>
           <TableHead>
             <TableRow>
-              <TableCell>Студент</TableCell>
-              <TableCell align="center">Выполнено ДЗ</TableCell>
-              <TableCell align="center">Средний балл</TableCell>
-              <TableCell align="center">Общий балл</TableCell>
-              <TableCell align="right">Действия</TableCell>
+              <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Студент</TableCell>
+              <TableCell align="center" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Выполнено ДЗ</TableCell>
+              <TableCell align="center" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Средний балл</TableCell>
+              <TableCell align="center" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, display: { xs: 'none', md: 'table-cell' } }}>Общий балл</TableCell>
+              <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Действия</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -141,12 +163,12 @@ const GroupStats = ({ groupId }) => {
                   />
                 </TableCell>
                 <TableCell align="center">
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" fontWeight="bold" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                     {studentStat.averageScore}%
                   </Typography>
                 </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2">
+                <TableCell align="center" sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                  <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     {studentStat.totalScore}/{studentStat.maxTotalScore}
                   </Typography>
                 </TableCell>
@@ -155,6 +177,7 @@ const GroupStats = ({ groupId }) => {
                     size="small"
                     variant="outlined"
                     onClick={() => navigate(`/teacher/group/${groupId}/student/${studentStat.student.id}`)}
+                    sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
                   >
                     Подробнее
                   </Button>

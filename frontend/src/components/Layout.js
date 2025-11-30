@@ -119,15 +119,15 @@ const Layout = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontSize: { xs: '0.9rem', sm: '1.25rem' } }}>
             {user?.role === 'STUDENT' ? 'Студент' : 'Преподаватель'}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
               {user?.firstName} {user?.lastName}
             </Typography>
             <IconButton onClick={handleMenuOpen} size="small">
-              <Avatar sx={{ width: 32, height: 32 }}>
+              <Avatar sx={{ width: { xs: 28, sm: 32 }, height: { xs: 28, sm: 32 } }}>
                 {user?.firstName?.[0]}
               </Avatar>
             </IconButton>
@@ -192,9 +192,9 @@ const Layout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: { xs: 1, sm: 2, md: 3 },
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 8,
+          mt: { xs: 7, sm: 8 },
         }}
       >
         {children}

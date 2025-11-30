@@ -14,6 +14,7 @@ import {
 import { Add, Book, People, Assignment } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useMediaQuery, useTheme } from '@mui/material';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -49,12 +50,23 @@ const TeacherDashboard = () => {
 
   return (
     <Box className="page-enter">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Мои курсы</Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        mb: { xs: 2, sm: 3 },
+        gap: { xs: 2, sm: 0 }
+      }}>
+        <Typography variant="h4" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+          Мои курсы
+        </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => navigate('/teacher/create-course')}
+          size={isMobile ? 'small' : 'medium'}
+          fullWidth={isMobile}
         >
           Создать курс
         </Button>

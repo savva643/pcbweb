@@ -112,7 +112,7 @@ const CourseDetail = () => {
 
   return (
     <Box className="page-enter">
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
         {course.title}
       </Typography>
       {course.description && (

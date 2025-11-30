@@ -50,7 +50,9 @@ const StudentGroups = () => {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>Мои группы</Typography>
+      <Typography variant="h4" sx={{ mb: { xs: 2, sm: 3 }, fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+        Мои группы
+      </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -61,7 +63,15 @@ const StudentGroups = () => {
       {groups.length === 0 ? (
         <Alert severity="info">Вы не состоите ни в одной группе</Alert>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { 
+            xs: '1fr', 
+            sm: 'repeat(auto-fill, minmax(250px, 1fr))',
+            md: 'repeat(auto-fill, minmax(300px, 1fr))' 
+          }, 
+          gap: 2 
+        }}>
           {groups.map((group) => (
             <Card
               key={group.id}
