@@ -19,6 +19,8 @@ import { useMediaQuery, useTheme } from '@mui/material';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const TeacherDashboard = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

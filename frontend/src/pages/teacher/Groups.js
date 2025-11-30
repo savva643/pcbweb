@@ -18,6 +18,8 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Add,
@@ -37,7 +39,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const Groups = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [groups, setGroups] = useState([]);
