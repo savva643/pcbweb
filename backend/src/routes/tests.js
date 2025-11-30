@@ -227,6 +227,17 @@ router.post('/:id/submit', authenticate, requireRole('STUDENT'), testValidators.
  *       200:
  *         description: Результаты попытки
  */
+/**
+ * @swagger
+ * /api/tests/{id}/attempts/all:
+ *   get:
+ *     summary: Получить все попытки по тесту (для преподавателя)
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/:id/attempts/all', authenticate, requireRole('TEACHER'), testValidators.testId, testController.getTestAttempts);
+
 router.get('/:id/attempts/:attemptId', authenticate, testValidators.testId, testValidators.attemptId, testController.getAttemptResults);
 
 /**
@@ -250,17 +261,6 @@ router.put('/:id/active', authenticate, requireRole('TEACHER'), testValidators.t
  *       - bearerAuth: []
  */
 router.get('/:id/attempts', authenticate, requireRole('STUDENT'), testValidators.testId, testController.getStudentAttempts);
-
-/**
- * @swagger
- * /api/tests/{id}/attempts/all:
- *   get:
- *     summary: Получить все попытки по тесту (для преподавателя)
- *     tags: [Tests]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/:id/attempts/all', authenticate, requireRole('TEACHER'), testValidators.testId, testController.getTestAttempts);
 
 /**
  * @swagger

@@ -143,11 +143,20 @@ class TestService {
    * @returns {Promise<object>} Созданный вопрос
    */
   async addQuestion(testId, teacherId, data) {
-    const test = await testRepository.findById(testId, {
-      course: true
+    const prisma = require('../config/database');
+    
+    const test = await prisma.test.findUnique({
+      where: { id: testId },
+      include: {
+        course: true
+      }
     });
 
-    if (!test || test.course.teacherId !== teacherId) {
+    if (!test) {
+      throw new Error('Test not found');
+    }
+
+    if (!test.course || test.course.teacherId !== teacherId) {
       throw new Error('Access denied');
     }
 
@@ -403,6 +412,63 @@ class TestService {
     return testRepository.update(testId, { 
       isActive,
       closedAt: closedAt || (isActive ? null : new Date())
+    });
+  }
+
+  /**
+   * Получить все попытки по тесту (для преподавателя)
+   * @param {string} testId - ID теста
+   * @param {string} teacherId - ID преподавателя
+   * @returns {Promise<Array>} Список попыток
+   */
+  async getTestAttempts(testId, teacherId) {
+    const prisma = require('../config/database');
+    
+    const test = await prisma.test.findUnique({
+      where: { id: testId },
+      include: {
+        course: true
+      }
+    });
+
+    if (!test) {
+      throw new Error('Test not found');
+    }
+
+    if (!test.course || test.course.teacherId !== teacherId) {
+      throw new Error('Access denied');
+    }
+
+    return prisma.testAttempt.findMany({
+      where: { testId },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        answers: {
+          include: {
+            question: true
+          }
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
+        }
+      },
+      orderBy: { submittedAt: 'desc' }
     });
   }
 }
